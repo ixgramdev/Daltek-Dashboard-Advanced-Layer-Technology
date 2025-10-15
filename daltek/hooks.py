@@ -25,8 +25,8 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/daltek/css/daltek.css"
-# app_include_js = "/assets/daltek/js/daltek.js"
+app_include_css = ["/assets/daltek/css/gridstack.min.css"]
+app_include_js = ["/assets/daltek/js/gridstack-all.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/daltek/css/daltek.css"

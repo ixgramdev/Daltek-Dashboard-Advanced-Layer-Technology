@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-14 23:42:55.247215",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "dashboard_settings_tab",
+  "name1",
+  "column_break_inwv",
+  "type",
+  "editable_menu_tab",
+  "drag_drop_html",
+  "layout",
+  "preview_tab"
+ ],
+ "fields": [
+  {
+   "fieldname": "dashboard_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dashboard Settings"
+  },
+  {
+   "fieldname": "name1",
+   "fieldtype": "Select",
+   "label": "Name"
+  },
+  {
+   "fieldname": "column_break_inwv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "label": "Type"
+  },
+  {
+   "fieldname": "editable_menu_tab",
+   "fieldtype": "Tab Break",
+   "label": "Editable Menu"
+  },
+  {
+   "fieldname": "preview_tab",
+   "fieldtype": "Tab Break",
+   "label": "Preview"
+  },
+  {
+   "fieldname": "drag_drop_html",
+   "fieldtype": "HTML",
+   "label": "drag_drop_html"
+  },
+  {
+   "fieldname": "layout",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Layout"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-15 00:08:34.677003",
+ "modified_by": "Administrator",
+ "module": "Daltek",
+ "name": "Daltek",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
