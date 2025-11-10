@@ -7,28 +7,36 @@ repos:
     rev: v4.4.0
     hooks:
       - id: trailing-whitespace
-        files: "cuba.*"
+        files: "^daltek/.*"
         exclude: ".*json$|.*txt$|.*csv|.*md|.*svg"
       - id: no-commit-to-branch
         args: ['--branch', 'master', '--branch', 'qa', '--branch', 'develop']
       - id: check-merge-conflict
+        files: "^daltek/.*"
       - id: check-ast
+        files: "^daltek/.*"
       - id: check-json
+        files: "^daltek/.*"
       - id: check-toml
+        files: "^daltek/.*"
       - id: check-yaml
+        files: "^daltek/.*"
       - id: debug-statements
+        files: "^daltek/.*"
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.3.0
     hooks:
       - id: pyupgrade
         args: ['--py310-plus']
+        files: "^daltek/.*"
 
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
       - id: flake8
         additional_dependencies: ['flake8-bugbear']
+        files: "^daltek/.*"
         exclude: ".*setup.py$|clear-json.py"
         args: ["--ignore=E501"]
 
@@ -37,6 +45,7 @@ repos:
     hooks:
       - id: black
         additional_dependencies: ['click==8.0.4']
+        files: "^daltek/.*"
         exclude: "clear-json.py"
 
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -44,6 +53,7 @@ repos:
     hooks:
       - id: prettier
         types_or: [javascript]
+        files: "^daltek/.*"
         exclude: |
             (?x)^(
                 .*node_modules.*|
@@ -55,6 +65,7 @@ repos:
     hooks:
       - id: isort
         args: ["--profile", "black", "--filter-files"]
+        files: "^daltek/.*"
         exclude: ".*setup.py$|clear-json.py"
 
   - repo: https://github.com/compilerla/conventional-pre-commit
@@ -72,4 +83,3 @@ ci:
   autoupdate_schedule: weekly
   skip: []
   submodules: false
-
