@@ -1,0 +1,75 @@
+exclude: 'node_modules|.git|clear-json.py'
+default_stages: [commit]
+fail_fast: false
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        files: "cuba.*"
+        exclude: ".*json$|.*txt$|.*csv|.*md|.*svg"
+      - id: no-commit-to-branch
+        args: ['--branch', 'master', '--branch', 'qa', '--branch', 'develop']
+      - id: check-merge-conflict
+      - id: check-ast
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.0
+    hooks:
+      - id: pyupgrade
+        args: ['--py310-plus']
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies: ['flake8-bugbear']
+        exclude: ".*setup.py$|clear-json.py"
+        args: ["--ignore=E501"]
+
+  - repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+      - id: black
+        additional_dependencies: ['click==8.0.4']
+        exclude: "clear-json.py"
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.0-alpha.4
+    hooks:
+      - id: prettier
+        types_or: [javascript]
+        exclude: |
+            (?x)^(
+                .*node_modules.*|
+                .*boilerplate.*|
+            )$
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
+        exclude: ".*setup.py$|clear-json.py"
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v2.1.1
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [.git/COMMIT_EDITMSG]
+
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
+ci:
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
+

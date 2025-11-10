@@ -1,10 +1,10 @@
 // widgets.js
 window.availableWidgets = [
-    {
-        id: 'card_widget',
-        title: 'KPI Card',
-        type: 'card',
-        previewHtml: `
+  {
+    id: "card_widget",
+    title: "KPI Card",
+    type: "card",
+    previewHtml: `
             <div style="
                 width:100px;
                 height:60px;
@@ -22,18 +22,18 @@ window.availableWidgets = [
                 Card
             </div>
         `,
-        options: { 
-            color: '#2196F3', 
-            number: 0, 
-            title: 'KPI Card',
-            icon: '/assets/daltek/icons/card.svg'
-        }
+    options: {
+      color: "#2196F3",
+      number: 0,
+      title: "KPI Card",
+      icon: "/assets/daltek/icons/card.svg",
     },
-    {
-        id: 'line_chart_widget',
-        title: 'Line Chart',
-        type: 'line_chart',
-        previewHtml: `
+  },
+  {
+    id: "line_chart_widget",
+    title: "Line Chart",
+    type: "line_chart",
+    previewHtml: `
             <div style="
                 width:100px;
                 height:60px;
@@ -51,10 +51,10 @@ window.availableWidgets = [
                 Chart
             </div>
         `,
-        options: { 
-            color: '#4CAF50', 
-            title: 'Line Chart',
-            icon: '/assets/daltek/icons/chart.svg'
-        }
-    }
+    options: {
+      color: "#4CAF50",
+      title: "Line Chart",
+      icon: "/assets/daltek/icons/chart.svg",
+    },
+  },
 ];

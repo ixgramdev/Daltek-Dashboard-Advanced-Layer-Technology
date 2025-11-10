@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mini-QueryBuilder (estilo MetaBase / ERPnext)</title>
+<style>
+  :root{
+    --bg: #f6f8fa;
+    --card:#ffffff;
+    --muted:#6b7280;
+    --accent:#0b6efd;
+    --text:#0f1724;
+    --border:#e6e9ee;
+    --success:#16a34a;
+    --radius:10px;
+    --shadow: 0 6px 18px rgba(15,23,36,0.06);
+    --glass: rgba(11,110,253,0.06);
+  }
+  .dark{
+    --bg: #0b0f14;
+    --card:#0f1720;
+    --muted:#9aa4b2;
+    --accent:#60a5fa;
+    --text:#e6eef8;
+    --border:#1f2a36;
+    --shadow: 0 8px 24px rgba(2,6,23,0.6);
+    --glass: rgba(96,165,250,0.08);
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:28px;
+  }
+
+  .app {
+    max-width:1100px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns: 1fr 400px;
+    gap:20px;
+    align-items:start;
+  }
+
+  header{
+    grid-column: 1 / -1;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  h1{font-size:18px;margin:0;font-weight:600}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    border:1px solid var(--border);
+    padding:18px;
+  }
+
+  /* Left column */
+  .left .section{margin-bottom:14px}
+  label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+  select, input[type="text"], textarea{
+    width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+    background:transparent; color:var(--text); box-sizing:border-box;
+  }
+
+  .controls-row{display:flex; gap:10px; align-items:center}
+  .controls-row > * {flex:1}
+
+  .muted-inline{font-size:13px;color:var(--muted);margin-left:8px}
+
+  .btn{
+    background:linear-gradient(180deg,var(--accent), color-mix(in srgb, var(--accent) 85%, black 10%));
+    color:white; padding:9px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600;
+  }
+  .btn.ghost{background:transparent; color:var(--accent); border:1px solid var(--border); font-weight:600}
+  .btn.small{padding:6px 8px; font-size:13px}
+
+  .cols-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .col-chip{padding:6px 10px;border-radius:999px;background:var(--glass);border:1px solid var(--border);font-size:13px}
+
+  .filters{margin-top:10px; display:flex; flex-direction:column; gap:8px}
+  .filter-row{display:flex;gap:8px;align-items:center}
+  .filter-row select, .filter-row input{flex:1}
+  .filter-row .op{max-width:100px}
+  .filter-row .remove{background:transparent;border:none;color:var(--muted);cursor:pointer}
+
+  /* Results */
+  .table-wrap{overflow:auto;border-radius:8px;border:1px solid var(--border);margin-top:12px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:linear-gradient(to bottom,var(--glass),transparent);font-weight:600}
+
+  /* right column */
+  .right .meta-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .toggle-row{display:flex;gap:8px;align-items:center}
+
+  /* small helpers */
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
+  .sql-area{width:100%;min-height:100px; padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:monospace;font-size:13px}
+  .empty{padding:26px;text-align:center;color:var(--muted);font-size:14px}
+
+  /* responsive */
+  @media (max-width:980px){
+    .app{grid-template-columns:1fr; padding:14px;}
+    header{flex-direction:column;align-items:flex-start;gap:8px}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div>
+      <h1>Mini QueryBuilder</h1>
+      <div class="sub">Construye consultas visualmente — estilo MetaBase. El SQL se oculta por defecto.</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="toggle-row card" style="padding:8px;">
+        <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+          <input id="showSqlChk" type="checkbox" /> <span class="muted-inline">Mostrar SQL</span>
+        </label>
+        <button id="themeToggle" class="btn small ghost" title="Alternar tema">Modo oscuro</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- LEFT: builder -->
+  <section class="left card">
+    <div class="section">
+      <label for="tableSelect">1) Selecciona la fuente de datos (tabla)</label>
+      <select id="tableSelect">
+        <option value="">-- Elige una tabla --</option>
+      </select>
+      <div id="tableHint" class="hint">Comienza escogiendo una tabla. Los campos de consulta aparecerán luego.</div>
+    </div>
+
+    <div class="section" id="colsSection" style="display:none">
+      <label>2) Columnas</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="colsSelect">
+          <option value="">-- elige columna --</option>
+        </select>
+        <button id="addColBtn" class="btn small">Agregar</button>
+        <button id="selectAllCols" class="btn small ghost">Todas</button>
+      </div>
+      <div class="cols-list" id="colsList"></div>
+    </div>
+
+    <div class="section" id="filtersSection" style="display:none">
+      <label>3) Filtros (opcional) <span class="muted-inline">agrega condiciones</span></label>
+      <div class="filters" id="filtersContainer"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="addFilterBtn" class="btn small ghost">+ Añadir filtro</button>
+        <div class="muted-inline" style="align-self:center">Los filtros aparecen en orden.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="runBtn" class="btn">Ejecutar consulta</button>
+      <button id="resetBtn" class="btn ghost">Reset</button>
+    </div>
+
+    <div id="resultsSection" style="margin-top:16px;display:none">
+      <label>Resultados</label>
+      <div class="table-wrap" id="resultsWrap">
+        <div class="empty">Ejecuta la consulta para ver resultados.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: info / preview / SQL -->
+  <aside class="right card">
+    <div class="meta-row">
+      <div>
+        <div style="font-weight:600">Vista previa</div>
+        <div class="hint">Resumen de la consulta actual</div>
+      </div>
+    </div>
+
+    <div style="margin-top:6px">
+      <div class="hint"><strong>Tabla:</strong> <span id="metaTable" style="color:var(--muted)">—</span></div>
+      <div class="hint"><strong>Columnas:</strong> <span id="metaCols" style="color:var(--muted)">—</span></div>
+      <div class="hint"><strong>Filtros:</strong> <span id="metaFilters" style="color:var(--muted)">—</span></div>
+    </div>
+
+    <div style="margin-top:12px;display:none" id="sqlCard">
+      <label>SQL generado</label>
+      <textarea id="sqlArea" class="sql-area" readonly></textarea>
+    </div>
+
+    <div style="margin-top:12px">
+      <label>Documentación rápida</label>
+      <div class="hint">1) Selecciona tabla → 2) Elige columnas → 3) Añade filtros → Ejecutar.</div>
+      <div class="hint" style="margin-top:8px">La consulta SQL se genera automáticamente (solo se muestra si activas "Mostrar SQL").</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+/*
+  Mini QueryBuilder
+  - Simula tablas con mockDB (client-side)
+  - Controles aparecen de forma consecutiva
+  - Genera un SQL simple para mostrar (SELECT ... FROM ... WHERE ...)
+  - No usa librerías externas
+*/
+
+// ---------- Mock DB (reemplaza esto por llamadas API) ----------
+const mockDB = {
+  users: {
+    cols: ["id","name","email","role","created_at","active"],
+    rows: [
+      {id:1,name:"Ana Perez",email:"ana@example.com",role:"admin",created_at:"2024-04-01",active:true},
+      {id:2,name:"Luis Gomez",email:"luis@example.com",role:"editor",created_at:"2024-05-15",active:true},
+      {id:3,name:"María Ruiz",email:"maria@example.com",role:"viewer",created_at:"2024-06-20",active:false},
+      {id:4,name:"John Doe",email:"john@ex.com",role:"editor",created_at:"2024-07-01",active:true}
+    ]
+  },
+  orders: {
+    cols: ["order_id","user_id","amount","status","created_at"],
+    rows: [
+      {order_id:101,user_id:1,amount:49.99,status:"paid",created_at:"2025-01-01"},
+      {order_id:102,user_id:2,amount:19.5,status:"pending",created_at:"2025-01-05"},
+      {order_id:103,user_id:1,amount:7.0,status:"refunded",created_at:"2025-02-10"}
+    ]
+  },
+  products: {
+    cols: ["sku","title","price","stock","category"],
+    rows: [
+      {sku:"A-001",title:"Camisa",price:25.00,stock:56,category:"Ropa"},
+      {sku:"B-010",title:"Mouse",price:19.99,stock:10,category:"Electrónica"}
+    ]
+  }
+};
+
+// ---------- State ----------
+const state = {
+  table: null,
+  selectedCols: [],
+  filters: [] // {col, op, val}
+};
+
+// ---------- UI refs ----------
+const tableSelect = document.getElementById('tableSelect');
+const tableHint = document.getElementById('tableHint');
+const colsSection = document.getElementById('colsSection');
+const colsSelect = document.getElementById('colsSelect');
+const addColBtn = document.getElementById('addColBtn');
+const colsList = document.getElementById('colsList');
+const selectAllCols = document.getElementById('selectAllCols');
+
+const filtersSection = document.getElementById('filtersSection');
+const filtersContainer = document.getElementById('filtersContainer');
+const addFilterBtn = document.getElementById('addFilterBtn');
+
+const runBtn = document.getElementById('runBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+const resultsSection = document.getElementById('resultsSection');
+const resultsWrap = document.getElementById('resultsWrap');
+
+const metaTable = document.getElementById('metaTable');
+const metaCols = document.getElementById('metaCols');
+const metaFilters = document.getElementById('metaFilters');
+
+const showSqlChk = document.getElementById('showSqlChk');
+const sqlCard = document.getElementById('sqlCard');
+const sqlArea = document.getElementById('sqlArea');
+
+const themeToggle = document.getElementById('themeToggle');
+
+// ---------- Init ----------
+function init(){
+  // populate tables
+  const optFrag = document.createDocumentFragment();
+  Object.keys(mockDB).forEach(k=>{
+    const opt = document.createElement('option'); opt.value = k; opt.textContent = k;
+    optFrag.appendChild(opt);
+  });
+  tableSelect.appendChild(optFrag);
+
+  // handlers
+  tableSelect.addEventListener('change', onTableChange);
+  addColBtn.addEventListener('click', onAddCol);
+  selectAllCols.addEventListener('click', onSelectAllCols);
+  addFilterBtn.addEventListener('click', onAddFilter);
+  runBtn.addEventListener('click', onRun);
+  resetBtn.addEventListener('click', onReset);
+  showSqlChk.addEventListener('change', ()=>{ sqlCard.style.display = showSqlChk.checked ? 'block' : 'none'; });
+  themeToggle.addEventListener('click', toggleTheme);
+
+  // load theme from prefers-color-scheme
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+  if(prefersDark){ document.documentElement.classList.add('dark'); themeToggle.textContent = 'Modo claro'; }
+}
+init();
+
+// ---------- Handlers ----------
+function onTableChange(){
+  const val = tableSelect.value;
+  resetSelectionBelow('table'); // clear lower steps
+  if(!val){ tableHint.textContent = 'Comienza escogiendo una tabla. Los campos de consulta aparecerán luego.'; return; }
+  state.table = val;
+  tableHint.textContent = `Tabla seleccionada: ${val}. Ahora elige columnas.`;
+  // populate columns select
+  populateCols(val);
+  colsSection.style.display = 'block';
+  // update meta
+  metaTable.textContent = val;
+  metaCols.textContent = '—';
+  metaFilters.textContent = '—';
+}
+
+function populateCols(table){
+  colsSelect.innerHTML = '<option value="">-- elige columna --</option>';
+  mockDB[table].cols.forEach(c=>{
+    const opt = document.createElement('option'); opt.value = c; opt.textContent = c; colsSelect.appendChild(opt);
+  });
+}
+
+function onAddCol(){
+  const col = colsSelect.value;
+  if(!col) return;
+  if(!state.selectedCols.includes(col)) state.selectedCols.push(col);
+  renderSelectedCols();
+  // when at least one column selected, show filters
+  if(state.selectedCols.length>0) filtersSection.style.display = 'block';
+  metaCols.textContent = state.selectedCols.join(', ');
+}
+
+function onSelectAllCols(){
+  if(!state.table) return;
+  state.selectedCols = [...mockDB[state.table].cols];
+  renderSelectedCols();
+  filtersSection.style.display = 'block';
+  metaCols.textContent = state.selectedCols.join(', ');
+}
+
+function renderSelectedCols(){
+  colsList.innerHTML = '';
+  state.selectedCols.forEach(c=>{
+    const chip = document.createElement('div');
+    chip.className='col-chip';
+    chip.innerHTML = `${c} <button data-col="${c}" style="margin-left:8px;border:none;background:transparent;cursor:pointer;color:var(--muted)">✕</button>`;
+    chip.querySelector('button').addEventListener('click', e=>{
+      const col = e.target.dataset.col;
+      state.selectedCols = state.selectedCols.filter(x=>x!==col);
+      renderSelectedCols();
+      if(state.selectedCols.length===0){
+        filtersSection.style.display = 'none';
+      }
+      metaCols.textContent = state.selectedCols.length? state.selectedCols.join(', ') : '—';
+    });
+    colsList.appendChild(chip);
+  });
+}
+
+function onAddFilter(){
+  if(!state.table) return;
+  const row = document.createElement('div'); row.className='filter-row';
+  const colSel = document.createElement('select'); colSel.innerHTML = '<option value="">-- columna --</option>';
+  mockDB[state.table].cols.forEach(c=>{
+    const o = document.createElement('option'); o.value = c; o.textContent = c; colSel.appendChild(o);
+  });
+  const opSel = document.createElement('select'); opSel.className='op';
+  ['=','!=','>','<','>=','<=','LIKE'].forEach(op=>{
+    const o = document.createElement('option'); o.value = op; o.textContent = op; opSel.appendChild(o);
+  });
+  const valInput = document.createElement('input'); valInput.type='text'; valInput.placeholder='valor';
+  const removeBtn = document.createElement('button'); removeBtn.className='remove'; removeBtn.textContent='🗑';
+  removeBtn.title='Eliminar filtro';
+  removeBtn.addEventListener('click', ()=>{ row.remove(); updateFiltersState(); });
+  // when any input changes, update filters state
+  [colSel,opSel,valInput].forEach(el => el.addEventListener('change', updateFiltersState));
+  row.appendChild(colSel); row.appendChild(opSel); row.appendChild(valInput); row.appendChild(removeBtn);
+  filtersContainer.appendChild(row);
+  updateFiltersState();
+}
+
+function updateFiltersState(){
+  const rows = [...filtersContainer.children];
+  const filters = [];
+  rows.forEach(r=>{
+    const [colSel, opSel, valInput] = r.querySelectorAll('select,select,input');
+    const col = colSel.value; const op = opSel.value; const val = valInput.value.trim();
+    if(col && op && val!=='') filters.push({col,op,val});
+  });
+  state.filters = filters;
+  metaFilters.textContent = filters.length? filters.map(f=>`${f.col} ${f.op} ${f.val}`).join(' AND ') : '—';
+}
+
+function onRun(){
+  if(!state.table){ alert('Selecciona primero una tabla.'); return; }
+  if(state.selectedCols.length===0){ alert('Selecciona al menos una columna o pulsa "Todas".'); return; }
+
+  // build SQL string
+  const sql = buildSQL();
+  sqlArea.value = sql;
+  sqlCard.style.display = showSqlChk.checked ? 'block' : 'none';
+
+  // execute against mockDB
+  const rows = executeMockQuery();
+  renderResults(rows);
+  resultsSection.style.display = 'block';
+}
+
+function buildSQL(){
+  const select = state.selectedCols.join(', ');
+  const from = state.table;
+  let where = '';
+  if(state.filters.length>0){
+    const conds = state.filters.map(f=>{
+      // si el op es LIKE y valor no tiene %, encajamos con %valor%
+      if(f.op==='LIKE'){
+        const v = f.val.includes('%') ? f.val : `%${f.val}%`;
+        return `${f.col} LIKE '${escapeSql(v)}'`;
+      }
+      // detectar si valor es numerico o booleano
+      const isNum = !isNaN(Number(f.val));
+      const isBool = ['true','false'].includes(f.val.toLowerCase());
+      if(isNum || isBool) return `${f.col} ${f.op} ${f.val}`;
+      return `${f.col} ${f.op} '${escapeSql(f.val)}'`;
+    });
+    where = ' WHERE ' + conds.join(' AND ');
+  }
+  return `SELECT ${select} FROM ${from}${where};`;
+}
+
+function escapeSql(s){
+  return s.replace(/'/g,"''");
+}
+
+function executeMockQuery(){
+  const table = mockDB[state.table];
+  if(!table) return [];
+  let rows = [...table.rows]; // shallow copy
+  // apply filters
+  state.filters.forEach(f=>{
+    rows = rows.filter(r=>{
+      const val = r[f.col];
+      const cmpVal = parseValueForComparison(f.val);
+      switch(f.op){
+        case '=': return val == cmpVal;
+        case '!=': return val != cmpVal;
+        case '>': return Number(val) > Number(cmpVal);
+        case '<': return Number(val) < Number(cmpVal);
+        case '>=': return Number(val) >= Number(cmpVal);
+        case '<=': return Number(val) <= Number(cmpVal);
+        case 'LIKE':
+          const needle = (f.val.includes('%')) ? f.val.replace(/%/g,'') : f.val;
+          return String(val).toLowerCase().includes(needle.toLowerCase());
+        default: return true;
+      }
+    });
+  });
+  // project columns
+  const projected = rows.map(r=>{
+    const obj = {};
+    state.selectedCols.forEach(c=> obj[c] = r[c]);
+    return obj;
+  });
+  return projected;
+}
+
+function parseValueForComparison(v){
+  if(v.toLowerCase && v.toLowerCase()==='true') return true;
+  if(v.toLowerCase && v.toLowerCase()==='false') return false;
+  if(!isNaN(Number(v))) return Number(v);
+  return v;
+}
+
+function renderResults(rows){
+  resultsWrap.innerHTML = '';
+  if(rows.length===0){
+    resultsWrap.innerHTML = '<div class="empty">La consulta no devolvió filas.</div>';
+    return;
+  }
+  const table = document.createElement('table');
+  const thead = document.createElement('thead'); const trh = document.createElement('tr');
+  state.selectedCols.forEach(c => { const th = document.createElement('th'); th.textContent = c; trh.appendChild(th); });
+  thead.appendChild(trh); table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    state.selectedCols.forEach(c => {
+      const td = document.createElement('td'); td.textContent = formatCell(r[c]); tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  resultsWrap.appendChild(table);
+}
+
+function formatCell(v){
+  if(typeof v === 'boolean') return v ? 'Sí' : 'No';
+  if(v === null || v === undefined) return '';
+  return String(v);
+}
+
+function onReset(){
+  // clear state and UI
+  tableSelect.value = '';
+  resetSelectionBelow('all');
+  state.table = null; state.selectedCols = []; state.filters = [];
+  metaTable.textContent = '—'; metaCols.textContent='—'; metaFilters.textContent='—';
+  resultsWrap.innerHTML = '<div class="empty">Ejecuta la consulta para ver resultados.</div>';
+  resultsSection.style.display = 'none';
+  sqlArea.value = '';
+  sqlCard.style.display = showSqlChk.checked ? 'block' : 'none';
+}
+
+function resetSelectionBelow(level){
+  // level = 'table' => clear cols & filters
+  // level = 'all' => also hide sections
+  colsSection.style.display = 'none';
+  colsList.innerHTML = '';
+  colsSelect.innerHTML = '<option value="">-- elige columna --</option>';
+  filtersSection.style.display = 'none';
+  filtersContainer.innerHTML = '';
+  state.selectedCols = [];
+  state.filters = [];
+  if(level==='all'){
+    resultsSection.style.display = 'none';
+  }
+}
+
+function toggleTheme(){
+  const root = document.documentElement;
+  if(root.classList.contains('dark')){
+    root.classList.remove('dark');
+    themeToggle.textContent = 'Modo oscuro';
+  } else {
+    root.classList.add('dark');
+    themeToggle.textContent = 'Modo claro';
+  }
+}
+
+// Init small demo state (optional)
+onReset();
+
+</script>
+</body>
+</html>

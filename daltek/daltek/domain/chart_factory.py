@@ -1,5 +1,4 @@
 # daltek/domain/chart_factory.py
-from daltek.domain.dashboard_data import PlotlyDataManager
 
 # Clases base de charts
 class ChartBase:
@@ -14,6 +13,7 @@ class ChartBase:
     def render(self):
         raise NotImplementedError("Render debe implementarse en subclases")
 
+
 # Subclases específicas
 class BarChart(ChartBase):
     def render(self):
@@ -22,8 +22,12 @@ class BarChart(ChartBase):
             "x": self.dataset.df[self.x].tolist(),
             "y": self.dataset.df[self.y].tolist(),
             "name": self.title,
-            "marker": {"color": self.color, **self.style}
+            "marker": {
+                "color": self.color,
+                **self.style,
+            },
         }
+
 
 class PieChart(ChartBase):
     def render(self):
@@ -35,14 +39,19 @@ class PieChart(ChartBase):
             "labels": self.dataset.df[self.x].tolist(),
             "values": self.dataset.df[self.y].tolist(),
             "name": self.title,
-            "marker": {"colors": colors, **self.style}
+            "marker": {
+                "colors": colors,
+                **self.style,
+            },
         }
+
 
 # Fábrica
 class ChartFactory:
     """
     Fábrica para crear charts. Valida tipo, columnas, colores y estilo.
     """
+
     CHART_TYPES = {
         "bar": BarChart,
         "pie": PieChart,
@@ -62,9 +71,10 @@ class ChartFactory:
                 raise ValueError(f"Columna '{col}' no existe en el dataset")
 
         # Validar color
-        if isinstance(color, list):
-            if len(color) != len(dataset.df):
-                raise ValueError("Lista de colores debe coincidir con el número de filas del dataset")
+        if isinstance(color, list) and len(color) != len(dataset.df):
+            raise ValueError(
+                "Lista de colores debe coincidir con el número de filas del dataset"
+            )
 
         # Validar estilo
         if style and not isinstance(style, dict):
