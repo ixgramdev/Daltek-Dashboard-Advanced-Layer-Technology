@@ -26,7 +26,7 @@ class PlotlyDataManager:
             ds = ds.group_by(group_by, agg)
         return ds.to_dict()
 
-    def prepare_for_plot(self, dataset_name, x, y, kind='line'):
+    def prepare_for_plot(self, dataset_name, x, y, kind="line"):
         """
         Prepara los datos en formato dict para Plotly o cualquier librería.
         kind: 'line', 'bar', 'pie', etc.
@@ -34,11 +34,7 @@ class PlotlyDataManager:
         ds = self.get_dataset(dataset_name)
         if not ds:
             return None
-        return {
-            'x': ds.df[x].tolist(),
-            'y': ds.df[y].tolist(),
-            'type': kind
-        }
+        return {"x": ds.df[x].tolist(), "y": ds.df[y].tolist(), "type": kind}
 
     def filter_dataset(self, dataset_name, **conditions):
         ds = self.get_dataset(dataset_name)

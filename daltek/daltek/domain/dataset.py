@@ -1,6 +1,7 @@
 # daltek/domain/dataset.py
-from collections import defaultdict
+
 import pandas as pd
+
 
 class Dataset:
     """
@@ -50,7 +51,7 @@ class Dataset:
         grouped = grouped.reset_index()
         return Dataset(grouped)
 
-    def pivot(self, index, columns, values, aggfunc='sum'):
+    def pivot(self, index, columns, values, aggfunc="sum"):
         """Crea tabla pivote"""
         pivoted = pd.pivot_table(
             self.df,
@@ -58,7 +59,7 @@ class Dataset:
             columns=columns,
             values=values,
             aggfunc=aggfunc,
-            fill_value=0
+            fill_value=0,
         ).reset_index()
         return Dataset(pivoted)
 
@@ -66,7 +67,7 @@ class Dataset:
         """Estadísticas básicas de columnas numéricas"""
         return self.df.describe()
 
-    def to_dict(self, orient='records'):
+    def to_dict(self, orient="records"):
         """Devuelve los datos en formato lista de dicts"""
         return self.df.to_dict(orient=orient)
 

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini QueryBuilder</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="app" id="app">
+    
+    <header>
+      <div>
+        <h1>Mini QueryBuilder</h1>
+        <div class="sub">Construye consultas paso a paso. SQL oculto por defecto.</div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="toggle-row card" style="padding:8px;">
+          <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+            <input id="showSqlChk" type="checkbox" /> 
+            <span class="muted-inline">Mostrar SQL</span>
+          </label>
+          <button id="themeToggle" class="btn small ghost">Modo oscuro</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- LEFT SIDEBAR -->
+    <section class="left card">
+      
+      <div class="section">
+        <label for="tableSelect">1) Selecciona tabla</label>
+        <select id="tableSelect"></select>
+        <div id="tableHint" class="hint"></div>
+      </div>
+
+      <div class="section" id="colsSection" style="display:none">
+        <label>2) Columnas</label>
+        <div style="display:flex;gap:8px">
+          <select id="colsSelect"></select>
+          <button id="addColBtn" class="btn small">Agregar</button>
+          <button id="selectAllCols" class="btn small ghost">Todas</button>
+        </div>
+        <div id="colsList" class="cols-list"></div>
+      </div>
+
+      <div class="section" id="filtersSection" style="display:none">
+        <label>3) Filtros</label>
+        <div id="filtersContainer" class="filters"></div>
+        <button id="addFilterBtn" class="btn small ghost">+ Añadir filtro</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button id="runBtn" class="btn">Ejecutar</button>
+        <button id="resetBtn" class="btn ghost">Reset</button>
+      </div>
+
+      <div id="resultsSection" style="margin-top:16px;display:none">
+        <label>Resultados</label>
+        <div class="table-wrap" id="resultsWrap"></div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="right card">
+      <div class="meta-row">
+        <div>
+          <div style="font-weight:600">Vista previa</div>
+          <div class="hint">Resumen de la consulta</div>
+        </div>
+      </div>
+
+      <div style="margin-top:6px">
+        <div class="hint"><strong>Tabla:</strong> <span id="metaTable">—</span></div>
+        <div class="hint"><strong>Columnas:</strong> <span id="metaCols">—</span></div>
+        <div class="hint"><strong>Filtros:</strong> <span id="metaFilters">—</span></div>
+      </div>
+
+      <div id="sqlCard" style="margin-top:12px;display:none">
+        <label>SQL generado</label>
+        <textarea id="sqlArea" class="sql-area" readonly></textarea>
+      </div>
+    </aside>
+
+  </div>
+
+  <script src="state.js"></script>
+  <script src="ui.js"></script>
+  <script src="steps.js"></script>
+  <script src="executor.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
