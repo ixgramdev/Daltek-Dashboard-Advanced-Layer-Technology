@@ -7,14 +7,20 @@
  "field_order": [
   "dashboard_settings_tab",
   "name1",
+  "dashboard_owner",
+  "is_public",
   "column_break_inwv",
   "type",
+  "date_created",
+  "last_modified",
   "editable_menu_tab",
   "drag_drop_html",
   "layout",
   "query_builder_tab",
   "query_builder_html",
-  "preview_tab"
+  "query_data_storage",
+  "preview_tab",
+  "preview"
  ],
  "fields": [
   {
@@ -24,7 +30,7 @@
   },
   {
    "fieldname": "name1",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "label": "Name"
   },
   {
@@ -49,7 +55,7 @@
   {
    "fieldname": "drag_drop_html",
    "fieldtype": "HTML",
-   "label": "drag_drop_html"
+   "label": "Drag and Drop Canva"
   },
   {
    "fieldname": "layout",
@@ -66,11 +72,46 @@
    "fieldname": "query_builder_html",
    "fieldtype": "HTML",
    "label": "Query Builder Interface"
+  },
+  {
+   "fieldname": "dashboard_owner",
+   "fieldtype": "Link",
+   "label": "Owner",
+   "options": "User"
+  },
+  {
+   "fieldname": "date_created",
+   "fieldtype": "Date",
+   "label": "Date Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_modified",
+   "fieldtype": "Date",
+   "label": "Last Modified",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_public",
+   "fieldtype": "Check",
+   "label": "Is Public?"
+  },
+  {
+   "fieldname": "query_data_storage",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Query Data Storage"
+  },
+  {
+   "fieldname": "preview",
+   "fieldtype": "HTML",
+   "label": "Preview"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-15 00:08:34.677003",
+ "modified": "2025-11-10 21:35:13.936465",
  "modified_by": "Administrator",
  "module": "Daltek",
  "name": "Daltek",
