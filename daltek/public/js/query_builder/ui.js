@@ -1,81 +1,123 @@
 // Accesos rápidos al DOM y helpers visuales
+// Se ejecuta en el contexto del campo HTML de ERPNext
 
-const tableSelect = document.getElementById("tableSelect");
-const tableHint = document.getElementById("tableHint");
-const colsSection = document.getElementById("colsSection");
-const colsSelect = document.getElementById("colsSelect");
-const addColBtn = document.getElementById("addColBtn");
-const colsList = document.getElementById("colsList");
-const selectAllCols = document.getElementById("selectAllCols");
+(function (window) {
+  "use strict";
 
-const filtersSection = document.getElementById("filtersSection");
-const filtersContainer = document.getElementById("filtersContainer");
-const addFilterBtn = document.getElementById("addFilterBtn");
+  window.QueryBuilderUI = window.QueryBuilderUI || {};
 
-const runBtn = document.getElementById("runBtn");
-const resetBtn = document.getElementById("resetBtn");
+  // Referencias al estado global
+  const getState = () => window.QueryBuilderState.state;
 
-const resultsSection = document.getElementById("resultsSection");
-const resultsWrap = document.getElementById("resultsWrap");
+  // Referencias al DOM
+  const tableSelect = document.getElementById("tableSelect");
+  const tableHint = document.getElementById("tableHint");
+  const colsSection = document.getElementById("colsSection");
+  const colsSelect = document.getElementById("colsSelect");
+  const addColBtn = document.getElementById("addColBtn");
+  const colsList = document.getElementById("colsList");
+  const selectAllCols = document.getElementById("selectAllCols");
 
-const metaTable = document.getElementById("metaTable");
-const metaCols = document.getElementById("metaCols");
-const metaFilters = document.getElementById("metaFilters");
+  const filtersSection = document.getElementById("filtersSection");
+  const filtersContainer = document.getElementById("filtersContainer");
+  const addFilterBtn = document.getElementById("addFilterBtn");
 
-const showSqlChk = document.getElementById("showSqlChk");
-const sqlCard = document.getElementById("sqlCard");
-const sqlArea = document.getElementById("sqlArea");
+  const runBtn = document.getElementById("runBtn");
+  const resetBtn = document.getElementById("resetBtn");
 
-const themeToggle = document.getElementById("themeToggle");
+  const resultsSection = document.getElementById("resultsSection");
+  const resultsWrap = document.getElementById("resultsWrap");
 
-function renderSelectedCols() {
-  colsList.innerHTML = "";
-  state.selectedCols.forEach((col) => {
-    const chip = document.createElement("div");
-    chip.className = "col-chip";
-    chip.innerHTML = `${col} <button data-col="${col}" style="border:none;background:transparent;color:var(--muted);cursor:pointer">✕</button>`;
-    chip.querySelector("button").addEventListener("click", () => {
-      state.selectedCols = state.selectedCols.filter((x) => x !== col);
-      renderSelectedCols();
-      metaCols.textContent = state.selectedCols.length
-        ? state.selectedCols.join(", ")
-        : "—";
-      if (!state.selectedCols.length) filtersSection.style.display = "none";
+  const metaTable = document.getElementById("metaTable");
+  const metaCols = document.getElementById("metaCols");
+  const metaFilters = document.getElementById("metaFilters");
+
+  const showSqlChk = document.getElementById("showSqlChk");
+  const sqlCard = document.getElementById("sqlCard");
+  const sqlArea = document.getElementById("sqlArea");
+
+  const themeToggle = document.getElementById("themeToggle");
+
+  // Exportar referencias DOM
+  window.QueryBuilderUI.dom = {
+    tableSelect,
+    tableHint,
+    colsSection,
+    colsSelect,
+    addColBtn,
+    colsList,
+    selectAllCols,
+    filtersSection,
+    filtersContainer,
+    addFilterBtn,
+    runBtn,
+    resetBtn,
+    resultsSection,
+    resultsWrap,
+    metaTable,
+    metaCols,
+    metaFilters,
+    showSqlChk,
+    sqlCard,
+    sqlArea,
+    themeToggle,
+  };
+
+  // Renderizar columnas seleccionadas
+  window.QueryBuilderUI.renderSelectedCols = function () {
+    const state = getState();
+    colsList.innerHTML = "";
+
+    state.selectedCols.forEach((col) => {
+      const chip = document.createElement("div");
+      chip.className = "col-chip";
+      chip.innerHTML = `${col} <button data-col="${col}" style="border:none;background:transparent;color:var(--qb-muted);cursor:pointer">✕</button>`;
+      chip.querySelector("button").addEventListener("click", () => {
+        state.selectedCols = state.selectedCols.filter((x) => x !== col);
+        window.QueryBuilderUI.renderSelectedCols();
+        metaCols.textContent = state.selectedCols.length
+          ? state.selectedCols.join(", ")
+          : "—";
+        if (!state.selectedCols.length) filtersSection.style.display = "none";
+      });
+      colsList.appendChild(chip);
     });
-    colsList.appendChild(chip);
-  });
-}
+  };
 
-function renderResults(rows) {
-  resultsWrap.innerHTML = "";
-  if (!rows.length) {
-    resultsWrap.innerHTML = `<div class="empty">La consulta no devolvió filas.</div>`;
-    return;
-  }
+  // Renderizar resultados de la consulta
+  window.QueryBuilderUI.renderResults = function (rows) {
+    const state = getState();
+    resultsWrap.innerHTML = "";
 
-  const table = document.createElement("table");
+    if (!rows.length) {
+      resultsWrap.innerHTML = `<div class="empty">La consulta no devolvió filas.</div>`;
+      return;
+    }
 
-  const thead = document.createElement("thead");
-  const trh = document.createElement("tr");
-  state.selectedCols.forEach((c) => {
-    const th = document.createElement("th");
-    th.textContent = c;
-    trh.appendChild(th);
-  });
-  thead.appendChild(trh);
+    const table = document.createElement("table");
 
-  const tbody = document.createElement("tbody");
-  rows.forEach((r) => {
-    const tr = document.createElement("tr");
+    const thead = document.createElement("thead");
+    const trh = document.createElement("tr");
     state.selectedCols.forEach((c) => {
-      const td = document.createElement("td");
-      td.textContent = String(r[c]);
-      tr.appendChild(td);
+      const th = document.createElement("th");
+      th.textContent = c;
+      trh.appendChild(th);
     });
-    tbody.appendChild(tr);
-  });
+    thead.appendChild(trh);
 
-  table.appendChild(thead);
-  table.appendChild(tbody);
-  resultsWrap.appendChild(table);
-}
+    const tbody = document.createElement("tbody");
+    rows.forEach((r) => {
+      const tr = document.createElement("tr");
+      state.selectedCols.forEach((c) => {
+        const td = document.createElement("td");
+        td.textContent = String(r[c]);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    resultsWrap.appendChild(table);
+  };
+})(window);
