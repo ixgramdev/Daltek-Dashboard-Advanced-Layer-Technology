@@ -8,7 +8,32 @@ frappe.ui.form.on("Daltek", {
       });
     }
   },
+
+  refresh(frm) {
+    // Cargar Query Builder si existe el campo HTML
+    if (frm.fields_dict.query_builder_html) {
+      load_query_builder(frm);
+    }
+  },
 });
+
+// Función para cargar el Query Builder en el campo HTML
+function load_query_builder(frm) {
+  frappe.call({
+    method: "daltek.daltek.doctype.daltek.daltek.get_query_builder_html",
+    callback: function (r) {
+      if (r.message) {
+        frm.fields_dict.query_builder_html.$wrapper.html(r.message);
+      }
+    },
+    error: function (err) {
+      console.error("Error cargando Query Builder:", err);
+      frm.fields_dict.query_builder_html.$wrapper.html(
+        "<div style='padding: 20px; color: red;'>Error al cargar Query Builder</div>",
+      );
+    },
+  });
+}
 
 function init_drag_drop_view(frm) {
   const wrapper = frm.fields_dict["drag_drop_html"].wrapper;

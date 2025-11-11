@@ -12,6 +12,8 @@
   "editable_menu_tab",
   "drag_drop_html",
   "layout",
+  "query_builder_tab",
+  "query_builder_html",
   "preview_tab"
  ],
  "fields": [
@@ -54,6 +56,16 @@
    "fieldtype": "JSON",
    "hidden": 1,
    "label": "Layout"
+  },
+  {
+   "fieldname": "query_builder_tab",
+   "fieldtype": "Tab Break",
+   "label": "Query Builder"
+  },
+  {
+   "fieldname": "query_builder_html",
+   "fieldtype": "HTML",
+   "label": "Query Builder Interface"
   }
  ],
  "index_web_pages_for_search": 1,
