@@ -110,6 +110,10 @@ def get_doctype_fields(doctype_name):
         # Obtener metadatos del DocType
         meta = frappe.get_meta(doctype_name)
 
+        # Verificar si es un DocType custom
+        doctype_doc = frappe.get_doc("DocType", doctype_name)
+        is_custom = getattr(doctype_doc, "custom", 0) == 1
+
         # Campos estándar que siempre están disponibles
         standard_fields = [
             {"fieldname": "name", "label": "ID", "fieldtype": "Data"},
@@ -152,6 +156,7 @@ def get_doctype_fields(doctype_name):
             "success": True,
             "doctype": doctype_name,
             "table_name": f"tab{doctype_name.replace(' ', '')}",
+            "is_custom": is_custom,
             "standard_fields": standard_fields,
             "custom_fields": custom_fields,
             "all_fields": standard_fields + custom_fields,
@@ -306,3 +311,175 @@ def get_drag_drop_html():
         frappe.log_error(error_msg)
         error_style = "padding: 20px" + "; " + "color: red"
         return f"<div style='{error_style}'>{error_msg}</div>"
+
+
+@frappe.whitelist()
+def save_query(doc_name, query_data):
+    try:
+        if isinstance(query_data, str):
+            query_data = frappe.parse_json(query_data)
+
+        if not doc_name or doc_name.startswith("new-"):
+            return {
+                "success": False,
+                "message": "Debes guardar el documento Daltek primero",
+            }
+
+        if not frappe.db.exists("Daltek", doc_name):
+            return {
+                "success": False,
+                "message": f"El documento Daltek '{doc_name}' no existe",
+            }
+
+        doc = frappe.get_doc("Daltek", doc_name)
+        existing_queries = (
+            frappe.parse_json(doc.query_data_storage) if doc.query_data_storage else []
+        )
+
+        query = {
+            "id": query_data.get("id") or frappe.generate_hash(length=8),
+            "name": query_data.get("name"),
+            "doctype": query_data.get("doctype"),
+            "columns": query_data.get("columns", []),
+            "filters": query_data.get("filters", []),
+            "description": query_data.get("description", ""),
+            "created_at": query_data.get("created_at") or frappe.utils.now(),
+            "modified_at": frappe.utils.now(),
+            "created_by": frappe.session.user,
+        }
+
+        query_index = -1
+        if "id" in query_data:
+            for i, existing_query in enumerate(existing_queries):
+                if existing_query.get("id") == query_data["id"]:
+                    query_index = i
+                    break
+
+        if query_index >= 0:
+            existing_queries[query_index] = query
+            message = f"Consulta '{query['name']}' actualizada exitosamente"
+        else:
+            existing_queries.append(query)
+            message = f"Consulta '{query['name']}' guardada exitosamente"
+
+        doc.query_data_storage = frappe.as_json(existing_queries)
+        doc.save()
+
+        return {
+            "success": True,
+            "message": message,
+            "query": query,
+            "total_queries": len(existing_queries),
+        }
+
+    except Exception as e:
+        frappe.log_error(f"Error guardando consulta: {str(e)}", "Query Save Error")
+        return {"success": False, "message": f"Error al guardar la consulta: {str(e)}"}
+
+
+@frappe.whitelist()
+def get_saved_queries(doc_name):
+    """
+    Obtiene todas las consultas guardadas del documento.
+
+    Args:
+        doc_name (str): Nombre del documento Daltek
+
+    Returns:
+        dict: Lista de consultas guardadas
+    """
+    try:
+        if not doc_name or doc_name.startswith("new-"):
+            return {
+                "success": True,
+                "queries": [],
+                "message": "Documento no guardado, sin consultas disponibles",
+            }
+
+        if not frappe.db.exists("Daltek", doc_name):
+            return {
+                "success": False,
+                "message": f"El documento Daltek '{doc_name}' no existe",
+            }
+
+        # Obtener el documento
+        doc = frappe.get_doc("Daltek", doc_name)
+
+        # Obtener consultas
+        queries = (
+            frappe.parse_json(doc.query_data_storage) if doc.query_data_storage else []
+        )
+
+        return {"success": True, "queries": queries, "total": len(queries)}
+
+    except Exception as e:
+        frappe.log_error(f"Error obteniendo consultas: {str(e)}", "Query Get Error")
+        return {
+            "success": False,
+            "message": f"Error al obtener las consultas: {str(e)}",
+        }
+
+
+@frappe.whitelist()
+def delete_query(doc_name, query_id):
+    """
+    Elimina una consulta específica.
+
+    Args:
+        doc_name (str): Nombre del documento Daltek
+        query_id (str): ID de la consulta a eliminar
+
+    Returns:
+        dict: Resultado de la operación
+    """
+    try:
+        if not doc_name or doc_name.startswith("new-"):
+            return {
+                "success": False,
+                "message": "Debes guardar el documento Daltek primero",
+            }
+
+        if not frappe.db.exists("Daltek", doc_name):
+            return {
+                "success": False,
+                "message": f"El documento Daltek '{doc_name}' no existe",
+            }
+
+        # Obtener el documento
+        doc = frappe.get_doc("Daltek", doc_name)
+
+        # Obtener consultas existentes
+        existing_queries = (
+            frappe.parse_json(doc.query_data_storage) if doc.query_data_storage else []
+        )
+
+        # Buscar y eliminar la consulta
+        query_to_delete = None
+        updated_queries = []
+
+        for query in existing_queries:
+            if query.get("id") == query_id:
+                query_to_delete = query
+            else:
+                updated_queries.append(query)
+
+        if not query_to_delete:
+            return {
+                "success": False,
+                "message": f"No se encontró la consulta con ID: {query_id}",
+            }
+
+        # Guardar la lista actualizada
+        doc.query_data_storage = frappe.as_json(updated_queries)
+        doc.save()
+
+        return {
+            "success": True,
+            "message": f"Consulta '{query_to_delete.get('name', query_id)}' eliminada exitosamente",
+            "deleted_query": query_to_delete,
+            "remaining_queries": len(updated_queries),
+        }
+
+    except Exception as e:
+        frappe.log_error(f"Error eliminando consulta: {str(e)}", "Query Delete Error")
+        return {"success": False, "message": f"Error al eliminar la consulta: {str(e)}"}

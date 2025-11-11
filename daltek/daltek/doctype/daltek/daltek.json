@@ -111,7 +111,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-10 21:35:13.936465",
+ "modified": "2025-11-11 13:04:20.176591",
  "modified_by": "Administrator",
  "module": "Daltek",
  "name": "Daltek",
@@ -130,6 +130,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

@@ -1,11 +1,8 @@
-// Views - Manejo de vistas del Query Builder
-
 (function (window) {
   "use strict";
 
   window.QueryBuilderViews = window.QueryBuilderViews || {};
 
-  // Elementos DOM
   const queriesListView = document.getElementById("queriesListView");
   const queryBuilderView = document.getElementById("queryBuilderView");
   const newQueryBtn = document.getElementById("newQueryBtn");
@@ -13,26 +10,25 @@
   const queriesList = document.getElementById("queriesList");
   const saveQueryBtn = document.getElementById("saveQueryBtn");
 
-  // Estado actual de la vista
-  let currentView = "list"; // 'list' o 'builder'
-  let currentQuery = null; // Query en edición
-  let savedQueries = []; // Lista de consultas guardadas
+  let currentView = "list";
+  let currentQuery = null;
+  let savedQueries = [];
 
-  /**
-   * Mostrar vista de listado
-   */
+  function getCurrentDocName() {
+    if (window.cur_frm && window.cur_frm.doc) {
+      return window.cur_frm.doc.name;
+    }
+    return null;
+  }
+
   window.QueryBuilderViews.showListView = function () {
     currentView = "list";
     queriesListView.style.display = "block";
     queryBuilderView.style.display = "none";
 
-    // Renderizar lista de consultas
     renderQueriesList();
   };
 
-  /**
-   * Mostrar vista de creación/edición
-   */
   window.QueryBuilderViews.showBuilderView = function (query = null) {
     currentView = "builder";
     currentQuery = query;
@@ -40,17 +36,12 @@
     queryBuilderView.style.display = "block";
 
     if (query) {
-      // Cargar datos de la consulta para edición
       loadQueryForEditing(query);
     } else {
-      // Nueva consulta - limpiar formulario
       resetBuilder();
     }
   };
 
-  /**
-   * Renderizar lista de consultas
-   */
   function renderQueriesList() {
     if (savedQueries.length === 0) {
       queriesList.innerHTML = `
@@ -72,9 +63,6 @@
     });
   }
 
-  /**
-   * Crear tarjeta de consulta
-   */
   function createQueryCard(query) {
     const card = document.createElement("div");
     card.className = "query-card";
@@ -127,7 +115,6 @@
     card.appendChild(description);
     card.appendChild(meta);
 
-    // Click en la tarjeta para ver/ejecutar
     card.addEventListener("click", () => {
       window.QueryBuilderViews.showBuilderView(query);
     });
@@ -135,22 +122,92 @@
     return card;
   }
 
-  /**
-   * Cargar consulta para edición
-   */
   function loadQueryForEditing(query) {
-    console.log("Cargando consulta para edición:", query);
+    if (window.QueryBuilderState) {
+      const state = window.QueryBuilderState.state;
 
-    // TODO: Cargar DocType, campos y filtros
-    // Esto se implementará cuando tengamos la persistencia de datos
-    // El nombre y descripción se cargarán en el modal cuando se presione "Guardar"
+      state.doctypeName = query.doctype;
+      state.table = query.doctype;
+      state.tableName = query.doctype;
+      state.selectedCols = query.columns || [];
+      state.filters = query.filters || [];
+
+      frappe.call({
+        method: "daltek.daltek.doctype.daltek.daltek.get_doctype_fields",
+        args: {
+          doctype_name: query.doctype,
+        },
+        callback: function (response) {
+          if (response.message && response.message.success) {
+            state.tableName = response.message.table_name;
+            state.table = response.message.table_name;
+            state.availableFields = response.message.all_fields;
+
+            const searchInput = document.getElementById("search");
+            if (searchInput) {
+              const isCustom = response.message.is_custom || false;
+              const displayValue = isCustom
+                ? `${query.doctype} (Custom)`
+                : query.doctype;
+              const datasetValue = isCustom
+                ? "tab" + query.doctype.replace(/\s/g, "")
+                : query.doctype;
+
+              searchInput.value = displayValue;
+              searchInput.dataset.value = datasetValue;
+              searchInput.dataset.doctype = query.doctype;
+            }
+
+            if (
+              window.QueryBuilderSteps &&
+              window.QueryBuilderSteps.handleTableChange
+            ) {
+              window.QueryBuilderSteps.handleTableChange();
+
+              setTimeout(() => {
+                state.selectedCols = query.columns || [];
+
+                if (window.QueryBuilderUI.renderSelectedCols) {
+                  window.QueryBuilderUI.renderSelectedCols();
+                }
+
+                state.filters = query.filters || [];
+                if (query.filters && query.filters.length > 0) {
+                  const dom = window.QueryBuilderUI?.dom;
+                  if (dom && dom.filtersContainer) {
+                    dom.filtersContainer.innerHTML = "";
+                    query.filters.forEach((filter) => {
+                      window.QueryBuilderSteps.addFilterRow();
+                      const lastRow = dom.filtersContainer.lastElementChild;
+                      if (lastRow) {
+                        const selects = lastRow.querySelectorAll("select");
+                        const input = lastRow.querySelector("input");
+                        if (selects[0]) selects[0].value = filter.col;
+                        if (selects[1]) selects[1].value = filter.op;
+                        if (input) input.value = filter.val;
+                      }
+                    });
+                    window.QueryBuilderSteps.updateFiltersState();
+                  }
+                }
+              }, 100);
+            }
+          } else {
+            frappe.msgprint(
+              `Error cargando campos del DocType: ${query.doctype}`,
+            );
+          }
+        },
+        error: function (error) {
+          frappe.msgprint(
+            `Error de conexión al cargar DocType: ${error.message}`,
+          );
+        },
+      });
+    }
   }
 
-  /**
-   * Limpiar el constructor
-   */
   function resetBuilder() {
-    // Resetear el estado del Query Builder
     if (window.QueryBuilderState) {
       window.QueryBuilderState.state = {
         table: "",
@@ -162,7 +219,6 @@
       };
     }
 
-    // Limpiar UI
     const dom = window.QueryBuilderUI?.dom;
     if (dom) {
       const searchInput = document.getElementById("search");
@@ -188,33 +244,49 @@
     }
   }
 
-  /**
-   * Eliminar consulta
-   */
   function deleteQuery(query) {
     frappe.confirm(
       `¿Estás seguro de que deseas eliminar la consulta "${query.name}"?`,
       () => {
-        // TODO: Implementar eliminación en backend
-        savedQueries = savedQueries.filter((q) => q.id !== query.id);
-        renderQueriesList();
+        const docName = getCurrentDocName();
+        if (!docName) {
+          frappe.msgprint("No se puede eliminar: documento no guardado");
+          return;
+        }
 
-        frappe.show_alert({
-          message: "Consulta eliminada correctamente",
-          indicator: "green",
+        frappe.call({
+          method: "daltek.daltek.doctype.daltek.daltek.delete_query",
+          args: {
+            doc_name: docName,
+            query_id: query.id,
+          },
+          callback: function (response) {
+            if (response.message && response.message.success) {
+              frappe.show_alert({
+                message: "Consulta eliminada correctamente",
+                indicator: "green",
+              });
+
+              savedQueries = savedQueries.filter((q) => q.id !== query.id);
+              renderQueriesList();
+            } else {
+              frappe.msgprint(
+                response.message?.error || "Error eliminando la consulta",
+              );
+            }
+          },
+          error: function (error) {
+            frappe.msgprint("Error de conexión al eliminar consulta");
+          },
         });
       },
     );
   }
 
-  /**
-   * Mostrar modal para guardar consulta
-   */
   window.QueryBuilderViews.saveCurrentQuery = function () {
     const state = window.QueryBuilderState?.state;
 
-    // Validar antes de abrir el modal
-    if (!state || !state.table) {
+    if (!state || (!state.table && !state.doctypeName)) {
       frappe.msgprint("Por favor selecciona un DocType");
       return;
     }
@@ -224,7 +296,6 @@
       return;
     }
 
-    // Si estamos editando, pre-llenar los campos del modal
     const modalNameInput = document.getElementById("modalQueryName");
     const modalDescInput = document.getElementById("modalQueryDescription");
 
@@ -236,28 +307,23 @@
       modalDescInput.value = "";
     }
 
-    // Mostrar el modal
     showSaveModal();
   };
 
-  /**
-   * Mostrar modal de guardado
-   */
   function showSaveModal() {
     const modal = document.getElementById("saveQueryModal");
     if (modal) {
       modal.classList.add("show");
-      // Enfocar el campo de nombre
+
       setTimeout(() => {
         const nameInput = document.getElementById("modalQueryName");
-        if (nameInput) nameInput.focus();
+        if (nameInput) {
+          nameInput.focus();
+        }
       }, 100);
     }
   }
 
-  /**
-   * Ocultar modal de guardado
-   */
   function hideSaveModal() {
     const modal = document.getElementById("saveQueryModal");
     if (modal) {
@@ -265,9 +331,6 @@
     }
   }
 
-  /**
-   * Confirmar y guardar la consulta desde el modal
-   */
   function confirmSave() {
     const modalNameInput = document.getElementById("modalQueryName");
     const modalDescInput = document.getElementById("modalQueryDescription");
@@ -282,75 +345,92 @@
     }
 
     const state = window.QueryBuilderState?.state;
+    const docName = getCurrentDocName();
 
-    const query = {
-      id: currentQuery?.id || Date.now().toString(),
-      name: queryName,
-      doctype: state.doctypeName,
-      table: state.table,
-      columns: state.selectedCols,
-      filters: state.filters || [],
-      description: queryDescription || `Consulta sobre ${state.doctypeName}`,
-      created_at: currentQuery?.created_at || new Date().toISOString(),
-      modified_at: new Date().toISOString(),
-    };
-
-    // TODO: Implementar guardado en backend
-    // Por ahora guardamos en memoria
-    if (currentQuery) {
-      // Actualizar consulta existente
-      const index = savedQueries.findIndex((q) => q.id === currentQuery.id);
-      if (index !== -1) {
-        savedQueries[index] = query;
-      }
-    } else {
-      // Nueva consulta
-      savedQueries.push(query);
+    if (!docName) {
+      frappe.msgprint("Debes guardar el documento Daltek primero");
+      return;
     }
 
-    frappe.show_alert({
-      message: currentQuery
-        ? "Consulta actualizada correctamente"
-        : "Consulta guardada correctamente",
-      indicator: "green",
-    });
+    const queryData = {
+      id: currentQuery?.id || null,
+      name: queryName,
+      doctype: state.doctypeName || "",
+      columns: state.selectedCols || [],
+      filters: state.filters || [],
+      description: queryDescription || `Consulta sobre ${state.doctypeName}`,
+      created_by: frappe.session.user,
+      created_at: currentQuery?.created_at || new Date().toISOString(),
+    };
 
-    // Cerrar modal y volver al listado
-    hideSaveModal();
-    window.QueryBuilderViews.showListView();
+    frappe.call({
+      method: "daltek.daltek.doctype.daltek.daltek.save_query",
+      args: {
+        doc_name: docName,
+        query_data: JSON.stringify(queryData),
+      },
+      callback: function (response) {
+        if (response.message && response.message.success) {
+          frappe.show_alert({
+            message: currentQuery
+              ? "Consulta actualizada"
+              : "Consulta guardada",
+            indicator: "green",
+          });
+
+          savedQueries = response.message.queries || [];
+          currentQuery = response.message.saved_query;
+
+          renderQueriesList();
+          hideSaveModal();
+        } else {
+          frappe.msgprint(
+            response.message?.error || "Error guardando la consulta",
+          );
+        }
+      },
+      error: function (error) {
+        frappe.msgprint("Error de conexión al guardar consulta");
+        frappe.show_alert({
+          message: "Error de red al guardar",
+          indicator: "red",
+        });
+      },
+    });
   }
 
-  /**
-   * Cargar consultas guardadas (simulado por ahora)
-   */
   window.QueryBuilderViews.loadSavedQueries = function () {
-    // TODO: Implementar carga desde backend
-    // Por ahora usamos datos de ejemplo
-    savedQueries = [
-      {
-        id: "1",
-        name: "Ventas del mes",
-        doctype: "Sales Invoice",
-        columns: ["name", "customer", "grand_total"],
-        filters: [],
-        description: "Consulta de ventas del mes actual",
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: "2",
-        name: "Clientes activos",
-        doctype: "Customer",
-        columns: ["name", "customer_name", "territory"],
-        filters: [{ col: "disabled", op: "=", val: "0" }],
-        description: "Lista de clientes activos en el sistema",
-        created_at: new Date().toISOString(),
-      },
-    ];
+    const docName = getCurrentDocName();
 
-    renderQueriesList();
+    if (!docName || docName.startsWith("new-")) {
+      savedQueries = [];
+      renderQueriesList();
+      return;
+    }
+
+    frappe.call({
+      method: "daltek.daltek.doctype.daltek.daltek.get_saved_queries",
+      args: {
+        doc_name: docName,
+      },
+      callback: function (response) {
+        if (response.message && response.message.success) {
+          savedQueries = response.message.queries || [];
+          renderQueriesList();
+        } else {
+          console.error("Error cargando consultas:", response.message);
+          savedQueries = [];
+          renderQueriesList();
+        }
+      },
+      error: function (error) {
+        console.error("Error de conexión al cargar consultas:", error);
+        savedQueries = [];
+        renderQueriesList();
+      },
+    });
   };
 
-  // Event Listeners
   if (newQueryBtn) {
     newQueryBtn.addEventListener("click", () => {
       window.QueryBuilderViews.showBuilderView();
@@ -369,7 +449,6 @@
     });
   }
 
-  // Event Listeners del Modal
   const closeModalBtn = document.getElementById("closeModalBtn");
   const cancelModalBtn = document.getElementById("cancelModalBtn");
   const confirmSaveBtn = document.getElementById("confirmSaveBtn");
@@ -388,7 +467,6 @@
     confirmSaveBtn.addEventListener("click", confirmSave);
   }
 
-  // Cerrar modal al hacer clic fuera de él
   if (saveQueryModal) {
     saveQueryModal.addEventListener("click", (e) => {
       if (e.target === saveQueryModal) {
@@ -397,14 +475,15 @@
     });
   }
 
-  // Cerrar modal con tecla ESC
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && saveQueryModal?.classList.contains("show")) {
-      hideSaveModal();
+    if (e.key === "Escape") {
+      const saveQueryModal = document.getElementById("saveQueryModal");
+      if (saveQueryModal && saveQueryModal.classList.contains("show")) {
+        hideSaveModal();
+      }
     }
   });
 
-  // Guardar con Enter en el campo de nombre
   if (modalQueryName) {
     modalQueryName.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -414,7 +493,6 @@
     });
   }
 
-  // Exportar funciones públicas
   window.QueryBuilderViews.getSavedQueries = () => savedQueries;
   window.QueryBuilderViews.getCurrentQuery = () => currentQuery;
   window.QueryBuilderViews.resetBuilder = resetBuilder;
