@@ -1,15 +1,12 @@
 // Accesos rápidos al DOM y helpers visuales
-// Se ejecuta en el contexto del campo HTML de ERPNext
 
 (function (window) {
   "use strict";
 
   window.QueryBuilderUI = window.QueryBuilderUI || {};
 
-  // Referencias al estado global
   const getState = () => window.QueryBuilderState.state;
 
-  // Referencias al DOM
   const tableSelect = document.getElementById("tableSelect");
   const tableHint = document.getElementById("tableHint");
   const colsSection = document.getElementById("colsSection");
@@ -38,7 +35,6 @@
 
   const themeToggle = document.getElementById("themeToggle");
 
-  // Exportar referencias DOM
   window.QueryBuilderUI.dom = {
     tableSelect,
     tableHint,
@@ -63,7 +59,6 @@
     themeToggle,
   };
 
-  // Renderizar columnas seleccionadas
   window.QueryBuilderUI.renderSelectedCols = function () {
     const state = getState();
     colsList.innerHTML = "";
@@ -84,7 +79,6 @@
     });
   };
 
-  // Renderizar resultados de la consulta
   window.QueryBuilderUI.renderResults = function (rows) {
     const state = getState();
     resultsWrap.innerHTML = "";

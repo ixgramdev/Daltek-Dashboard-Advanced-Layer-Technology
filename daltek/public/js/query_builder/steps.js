@@ -1,5 +1,4 @@
 // Steps - Lógica de los pasos del Query Builder
-// Se ejecuta en el contexto del campo HTML de ERPNext
 
 (function (window) {
   "use strict";
@@ -10,24 +9,87 @@
   const getMockDB = () => window.QueryBuilderState.mockDB;
   const dom = window.QueryBuilderUI.dom;
 
-  // Poblar el selector de tablas
   window.QueryBuilderSteps.populateTableSelect = function () {
-    const mockDB = getMockDB();
-
     dom.tableSelect.innerHTML =
-      '<option value="">-- Elige una tabla --</option>';
-    Object.keys(mockDB).forEach((name) => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      dom.tableSelect.appendChild(opt);
+      '<option value="">-- Cargando DocTypes... --</option>';
+
+    frappe.call({
+      method: "frappe.client.get_list",
+      args: {
+        doctype: "DocType",
+        fields: ["name", "module", "custom"],
+        filters: {
+          istable: 0,
+          issingle: 0,
+          is_virtual: 0,
+        },
+        limit_page_length: 0,
+        order_by: "name",
+      },
+      callback: function (response) {
+        dom.tableSelect.innerHTML =
+          '<option value="">-- Selecciona un DocType --</option>';
+
+        if (response.message && response.message.length > 0) {
+          console.log("DocTypes encontrados:", response.message.length);
+
+          const standardDoctypes = response.message.filter((dt) => !dt.custom);
+          const customDoctypes = response.message.filter((dt) => dt.custom);
+
+          if (standardDoctypes.length > 0) {
+            const standardGroup = document.createElement("optgroup");
+            standardGroup.label = "DocTypes Estándar";
+
+            standardDoctypes.forEach(function (doctype) {
+              const opt = document.createElement("option");
+              opt.value = "tab" + doctype.name.replace(/\s/g, "");
+              opt.textContent = doctype.name + " (" + doctype.module + ")";
+              opt.setAttribute("data-doctype", doctype.name);
+              standardGroup.appendChild(opt);
+            });
+
+            dom.tableSelect.appendChild(standardGroup);
+          }
+
+          if (customDoctypes.length > 0) {
+            const customGroup = document.createElement("optgroup");
+            customGroup.label = "DocTypes Personalizados";
+
+            customDoctypes.forEach(function (doctype) {
+              const opt = document.createElement("option");
+              opt.value = "tab" + doctype.name.replace(/\s/g, "");
+              opt.textContent = doctype.name + " (Custom)";
+              opt.setAttribute("data-doctype", doctype.name);
+              customGroup.appendChild(opt);
+            });
+
+            dom.tableSelect.appendChild(customGroup);
+          }
+
+          console.log(
+            "DocTypes cargados - Estándar:",
+            standardDoctypes.length,
+            "Custom:",
+            customDoctypes.length,
+          );
+        } else {
+          dom.tableSelect.innerHTML =
+            '<option value="">-- No se encontraron DocTypes --</option>';
+          console.warn("No se encontraron DocTypes");
+        }
+      },
+      error: function (error) {
+        console.error("Error obteniendo DocTypes:", error);
+        dom.tableSelect.innerHTML =
+          '<option value="">-- Error cargando DocTypes --</option>';
+        frappe.msgprint("Error al cargar los DocTypes: " + error.message);
+      },
     });
   };
 
-  // Manejar cambio de tabla
   window.QueryBuilderSteps.handleTableChange = function () {
     const state = getState();
-    const mockDB = getMockDB();
+    const selectedOption = dom.tableSelect.selectedOptions[0];
     const table = dom.tableSelect.value;
 
     state.table = table;
@@ -39,25 +101,52 @@
     dom.filtersContainer.innerHTML = "";
 
     if (!table) {
-      dom.tableHint.textContent = "Selecciona una tabla para continuar.";
+      dom.tableHint.textContent = "Selecciona un DocType para continuar.";
       return;
     }
 
-    dom.tableHint.textContent = `Tabla seleccionada: ${table}`;
-    dom.metaTable.textContent = table;
+    const doctypeName = selectedOption.getAttribute("data-doctype");
+    dom.tableHint.textContent = `DocType seleccionado: ${doctypeName}`;
+    dom.metaTable.textContent = doctypeName;
 
-    dom.colsSelect.innerHTML = '<option value="">-- elige columna --</option>';
-    mockDB[table].cols.forEach((col) => {
-      const opt = document.createElement("option");
-      opt.value = col;
-      opt.textContent = col;
-      dom.colsSelect.appendChild(opt);
+    dom.colsSelect.innerHTML =
+      '<option value="">-- Cargando campos... --</option>';
+
+    frappe.call({
+      method: "daltek.daltek.doctype.daltek.daltek.get_doctype_fields",
+      args: {
+        doctype_name: doctypeName,
+      },
+      callback: function (response) {
+        dom.colsSelect.innerHTML =
+          '<option value="">-- Selecciona campo --</option>';
+
+        if (response.message && response.message.success) {
+          const fields = response.message.all_fields;
+
+          state.doctypeName = doctypeName;
+          state.tableName = response.message.table_name;
+          state.availableFields = fields;
+
+          fields.forEach((field) => {
+            const opt = document.createElement("option");
+            opt.value = field.fieldname;
+            opt.textContent = field.label + " (" + field.fieldtype + ")";
+            dom.colsSelect.appendChild(opt);
+          });
+
+          dom.colsSection.style.display = "block";
+        }
+      },
+      error: function (error) {
+        console.error("Error obteniendo campos del DocType:", error);
+        dom.colsSelect.innerHTML =
+          '<option value="">-- Error cargando campos --</option>';
+        frappe.msgprint("Error al cargar los campos: " + error.message);
+      },
     });
-
-    dom.colsSection.style.display = "block";
   };
 
-  // Agregar una columna
   window.QueryBuilderSteps.handleAddColumn = function () {
     const state = getState();
     const col = dom.colsSelect.value;
@@ -71,22 +160,21 @@
     dom.filtersSection.style.display = "block";
   };
 
-  // Seleccionar todas las columnas
   window.QueryBuilderSteps.handleSelectAllColumns = function () {
     const state = getState();
-    const mockDB = getMockDB();
 
     if (!state.table) return;
-    state.selectedCols = [...mockDB[state.table].cols];
+
+    const allOptions = [...dom.colsSelect.options].slice(1);
+    state.selectedCols = allOptions.map((option) => option.value);
+
     window.QueryBuilderUI.renderSelectedCols();
     dom.metaCols.textContent = state.selectedCols.join(", ");
     dom.filtersSection.style.display = "block";
   };
 
-  // Agregar fila de filtro
   window.QueryBuilderSteps.addFilterRow = function () {
     const state = getState();
-    const mockDB = getMockDB();
 
     if (!state.table) return;
 
@@ -95,10 +183,11 @@
 
     const colSel = document.createElement("select");
     colSel.innerHTML = '<option value="">-- columna --</option>';
-    mockDB[state.table].cols.forEach((c) => {
+
+    [...dom.colsSelect.options].slice(1).forEach((option) => {
       const opt = document.createElement("option");
-      opt.value = c;
-      opt.textContent = c;
+      opt.value = option.value;
+      opt.textContent = option.textContent;
       colSel.appendChild(opt);
     });
 
@@ -138,7 +227,6 @@
     window.QueryBuilderSteps.updateFiltersState();
   };
 
-  // Actualizar estado de filtros
   window.QueryBuilderSteps.updateFiltersState = function () {
     const state = getState();
     const rows = [...dom.filtersContainer.children];
