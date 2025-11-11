@@ -27,6 +27,12 @@ function init() {
       const groupTitles = dropdown.querySelectorAll(".dropdown-group-title");
       let visibleCount = 0;
 
+      // Limpiar mensaje de "no coincidencias" si existe
+      const noMatchMsg = dropdown.querySelector(".no-match-message");
+      if (noMatchMsg) {
+        noMatchMsg.remove();
+      }
+
       // Filtrar items
       allItems.forEach((item) => {
         const text = item.textContent.toLowerCase();
@@ -57,10 +63,13 @@ function init() {
         title.style.display = hasVisibleItems ? "block" : "none";
       });
 
-      // Mensaje si no hay coincidencias
       if (visibleCount === 0) {
-        dropdown.innerHTML =
-          '<div class="dropdown-item" style="color: var(--qb-muted); cursor: default;">No se encontraron coincidencias</div>';
+        const noMatchElement = document.createElement("div");
+        noMatchElement.className = "dropdown-item no-match-message";
+        noMatchElement.style.cssText =
+          "color: var(--qb-muted); cursor: default;";
+        noMatchElement.textContent = "No se encontraron coincidencias";
+        dropdown.appendChild(noMatchElement);
       }
     });
 
@@ -98,6 +107,12 @@ function init() {
       );
       let visibleCount = 0;
 
+      // Limpiar mensaje de "no coincidencias" si existe
+      const noMatchMsg = fieldsDropdown.querySelector(".no-match-message");
+      if (noMatchMsg) {
+        noMatchMsg.remove();
+      }
+
       // Filtrar items
       allItems.forEach((item) => {
         const text = item.textContent.toLowerCase();
@@ -128,10 +143,13 @@ function init() {
         title.style.display = hasVisibleItems ? "block" : "none";
       });
 
-      // Mensaje si no hay coincidencias
       if (visibleCount === 0) {
-        fieldsDropdown.innerHTML =
-          '<div class="dropdown-item" style="color: var(--qb-muted); cursor: default;">No se encontraron coincidencias</div>';
+        const noMatchElement = document.createElement("div");
+        noMatchElement.className = "dropdown-item no-match-message";
+        noMatchElement.style.cssText =
+          "color: var(--qb-muted); cursor: default;";
+        noMatchElement.textContent = "No se encontraron coincidencias";
+        fieldsDropdown.appendChild(noMatchElement);
       }
     });
 
