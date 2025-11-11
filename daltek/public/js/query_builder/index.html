@@ -25,17 +25,24 @@
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   padding: 20px;
   border-radius: 8px;
+  width: 100%;
+  min-height: 80vh;
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 100%;
 }
 
 .app {
-  display: grid;
-  grid-template-columns: 1.8fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   box-sizing: border-box;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .app header {
-  grid-column: 1 / 3;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -61,6 +68,13 @@
   padding: 14px;
   box-sizing: border-box;
   overflow: auto;
+  max-height: calc(100vh - 100px);
+}
+
+/* Permitir que el dropdown se salga del card */
+.left.card {
+  overflow: visible;
+  max-height: none;
 }
 
 .section {
@@ -162,7 +176,27 @@
   overflow: auto;
   border: 1px solid var(--qb-border);
   border-radius: 4px;
-  max-height: 400px;
+  max-height: 500px;
+}
+
+/* Scrollbar para tabla de resultados */
+.table-wrap::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-wrap::-webkit-scrollbar-track {
+  background: var(--qb-bg);
+  border-radius: 4px;
+}
+
+.table-wrap::-webkit-scrollbar-thumb {
+  background: var(--qb-border);
+  border-radius: 4px;
+}
+
+.table-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--qb-muted);
 }
 
 .app table {
@@ -172,6 +206,9 @@
 
 .app thead {
   background: var(--qb-bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .app th, .app td {
@@ -181,23 +218,15 @@
   text-align: left;
 }
 
+.app th {
+  font-weight: 600;
+  background: var(--qb-card-bg);
+}
+
 .empty {
   padding: 16px;
   text-align: center;
   color: var(--qb-muted);
-}
-
-.sql-area {
-  width: 100%;
-  height: 120px;
-  padding: 8px;
-  background: var(--qb-bg);
-  border: 1px solid var(--qb-border);
-  border-radius: 4px;
-  color: var(--qb-text);
-  font-family: monospace;
-  font-size: 13px;
-  resize: vertical;
 }
 
 .hint {
@@ -205,30 +234,401 @@
   color: var(--qb-muted);
 }
 
-.meta-row {
+/* Estilos para el dropdown de búsqueda */
+.search-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Estilos comunes para ambos dropdowns */
+#dropdown,
+#fieldsDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 350px;
+  overflow-y: auto;
+  background: var(--qb-card-bg);
+  border: 1px solid var(--qb-border);
+  border-radius: 4px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  display: none;
+  margin-top: 4px;
+}
+
+/* Altura específica para dropdown de campos */
+#fieldsDropdown {
+  max-height: 300px;
+}
+
+/* Scrollbar personalizado para ambos dropdowns */
+#dropdown::-webkit-scrollbar,
+#fieldsDropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+#dropdown::-webkit-scrollbar-track,
+#fieldsDropdown::-webkit-scrollbar-track {
+  background: var(--qb-bg);
+  border-radius: 4px;
+}
+
+#dropdown::-webkit-scrollbar-thumb,
+#fieldsDropdown::-webkit-scrollbar-thumb {
+  background: var(--qb-border);
+  border-radius: 4px;
+}
+
+#dropdown::-webkit-scrollbar-thumb:hover,
+#fieldsDropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--qb-muted);
+}
+
+.dropdown-group-title {
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--qb-muted);
+  background: var(--qb-bg);
+  border-bottom: 1px solid var(--qb-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-item:hover {
+  background: var(--qb-accent);
+  color: white;
+}
+
+/* Estilos para el menú de consultas guardadas */
+#queriesListView {
+  display: none;
+  max-height: none;
+  overflow: visible;
+}
+
+.queries-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--qb-card-bg);
+  z-index: 10;
+  padding: 8px 0;
+}
+
+.queries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Scrollbar personalizado para la lista de consultas */
+.queries-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.queries-list::-webkit-scrollbar-track {
+  background: var(--qb-bg);
+  border-radius: 4px;
+}
+
+.queries-list::-webkit-scrollbar-thumb {
+  background: var(--qb-border);
+  border-radius: 4px;
+}
+
+.queries-list::-webkit-scrollbar-thumb:hover {
+  background: var(--qb-muted);
+}
+
+.query-card {
+  background: var(--qb-bg);
+  border: 1px solid var(--qb-border);
+  border-radius: 6px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.query-card:hover {
+  border-color: var(--qb-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.query-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
 }
 
-.muted-inline {
+.query-card-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--qb-text);
+}
+
+.query-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.query-card-actions button {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid var(--qb-border);
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--qb-text);
+}
+
+.query-card-actions button:hover {
+  background: var(--qb-accent);
+  border-color: var(--qb-accent);
+  color: white;
+}
+
+.query-card-actions button.delete:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.query-card-description {
+  font-size: 13px;
+  color: var(--qb-muted);
+  margin-bottom: 8px;
+}
+
+.query-card-meta {
+  font-size: 12px;
+  color: var(--qb-muted);
+  display: flex;
+  gap: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
   color: var(--qb-muted);
 }
 
-.toggle-row {
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--qb-text);
+}
+
+.empty-state-description {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* Botón para volver al listado */
+.back-button {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--qb-border);
+  border-radius: 4px;
+  color: var(--qb-text);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background: var(--qb-card-bg);
+  border-color: var(--qb-accent);
 }
 
 @media (max-width: 968px) {
-  .app {
-    grid-template-columns: 1fr;
+  .qb-wrapper {
+    padding: 12px;
   }
 
-  .app header {
-    grid-column: 1;
+  .card {
+    max-height: none;
   }
+
+  .queries-list {
+    max-height: calc(100vh - 150px);
+  }
+
+  .app {
+    max-width: 100%;
+  }
+}
+
+/* Estilos para el modal de guardar consulta */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: var(--qb-card-bg);
+  border: 1px solid var(--qb-border);
+  border-radius: 8px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--qb-text);
+  margin: 0;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--qb-muted);
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: var(--qb-bg);
+  color: var(--qb-text);
+}
+
+.modal-body {
+  margin-bottom: 20px;
+}
+
+.modal-field {
+  margin-bottom: 16px;
+}
+
+.modal-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--qb-text);
+}
+
+.modal-field input,
+.modal-field textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--qb-border);
+  background: var(--qb-bg);
+  color: var(--qb-text);
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.modal-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal-field input:focus,
+.modal-field textarea:focus {
+  outline: none;
+  border-color: var(--qb-accent);
+}
+
+.modal-field .optional {
+  color: var(--qb-muted);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modal-footer .btn {
+  min-width: 100px;
 }
   </style>
 
@@ -236,34 +636,56 @@
 
     <header>
       <div>
-        <h1>Mini QueryBuilder</h1>
-        <div class="sub">Construye consultas paso a paso. SQL oculto por defecto.</div>
+        <h1>QueryBuilder</h1>
+        <div class="sub">Construye consultas paso a paso.</div>
       </div>
 
-      <div style="display:flex;gap:10px;align-items:center">
-        <div class="toggle-row card" style="padding:8px;">
-          <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
-            <input id="showSqlChk" type="checkbox" />
-            <span class="muted-inline">Mostrar SQL</span>
-          </label>
-          <button id="themeToggle" class="btn small ghost">Modo oscuro</button>
-        </div>
-      </div>
     </header>
 
-    <!-- LEFT SIDEBAR -->
-    <section class="left card">
+    <!-- VISTA DE LISTADO DE CONSULTAS -->
+    <section id="queriesListView" class="left card">
+      <div class="queries-header">
+        <button id="newQueryBtn" class="btn">+ Crear Consulta</button>
+      </div>
+
+      <div id="queriesList" class="queries-list">
+        <!-- Las consultas se cargarán dinámicamente aquí -->
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <div class="empty-state-title">No hay consultas guardadas</div>
+          <div class="empty-state-description">
+            Comienza creando tu primera consulta SQL para visualizar datos
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA DE CREACIÓN/EDICIÓN DE CONSULTA -->
+    <section id="queryBuilderView" class="left card">
+
+      <!-- Botón para volver -->
+      <div style="margin-bottom: 16px;">
+        <button id="backToListBtn" class="back-button">
+          ← Volver al listado
+        </button>
+      </div>
 
       <div class="section">
-        <label for="tableSelect">1) Selecciona tabla</label>
-        <select id="tableSelect"></select>
+        <label for="tableSelect">1) Selecciona los datos a usar</label>
+        <div class="search-container">
+          <input id="search" type="text" placeholder="Selecciona un Doctype" autocomplete="off">
+          <div id="dropdown"></div>
+        </div>
         <div id="tableHint" class="hint"></div>
       </div>
 
       <div class="section" id="colsSection" style="display:none">
-        <label>2) Columnas</label>
-        <div style="display:flex;gap:8px">
-          <select id="colsSelect"></select>
+        <label>2) Selecciona los campos para la consulta</label>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="search-container" style="flex: 1;">
+            <input id="fieldsSearch" type="text" placeholder="Buscar campo..." autocomplete="off">
+            <div id="fieldsDropdown"></div>
+          </div>
           <button id="addColBtn" class="btn small">Agregar</button>
           <button id="selectAllCols" class="btn small ghost">Todas</button>
         </div>
@@ -277,38 +699,51 @@
       </div>
 
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button id="runBtn" class="btn">Ejecutar</button>
-        <button id="resetBtn" class="btn ghost">Reset</button>
-      </div>
-
-      <div id="resultsSection" style="margin-top:16px;display:none">
-        <label>Resultados</label>
-        <div class="table-wrap" id="resultsWrap"></div>
+        <button id="saveQueryBtn" class="btn">Guardar</button>
+        <button id="resetBtn" class="btn ghost">Restablecer</button>
       </div>
 
     </section>
 
-    <!-- RIGHT SIDEBAR -->
-    <aside class="right card">
-      <div class="meta-row">
-        <div>
-          <div style="font-weight:600">Vista previa</div>
-          <div class="hint">Resumen de la consulta</div>
+  </div>
+
+  <!-- Modal para guardar consulta -->
+  <div id="saveQueryModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Guardar Consulta</h3>
+        <button class="modal-close" id="closeModalBtn">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="modalQueryName">
+            Nombre de la consulta
+          </label>
+          <input
+            id="modalQueryName"
+            type="text"
+            placeholder="Ej: Ventas del mes, Clientes activos..."
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="modal-field">
+          <label for="modalQueryDescription">
+            Descripción <span class="optional">(Opcional)</span>
+          </label>
+          <textarea
+            id="modalQueryDescription"
+            placeholder="Describe el propósito de esta consulta..."
+          ></textarea>
         </div>
       </div>
 
-      <div style="margin-top:6px">
-        <div class="hint"><strong>Tabla:</strong> <span id="metaTable">—</span></div>
-        <div class="hint"><strong>Columnas:</strong> <span id="metaCols">—</span></div>
-        <div class="hint"><strong>Filtros:</strong> <span id="metaFilters">—</span></div>
+      <div class="modal-footer">
+        <button class="btn ghost" id="cancelModalBtn">Cancelar</button>
+        <button class="btn" id="confirmSaveBtn">💾 Guardar</button>
       </div>
-
-      <div id="sqlCard" style="margin-top:12px;display:none">
-        <label>SQL generado</label>
-        <textarea id="sqlArea" class="sql-area" readonly></textarea>
-      </div>
-    </aside>
-
+    </div>
   </div>
 </div>
 
@@ -318,6 +753,10 @@
 
 <script id="qb-ui-js">
 // ============ ui.js ============
+</script>
+
+<script id="qb-views-js">
+// ============ views.js ============
 </script>
 
 <script id="qb-steps-js">

@@ -185,6 +185,7 @@ def get_query_builder_html():
             ("index.html", "html"),
             ("state.js", "js"),
             ("ui.js", "js"),
+            ("views.js", "js"),
             ("steps.js", "js"),
             ("executor.js", "js"),
             ("main.js", "js"),
@@ -212,6 +213,7 @@ def get_query_builder_html():
         placeholder_map = {
             "state.js": "qb-state-js",
             "ui.js": "qb-ui-js",
+            "views.js": "qb-views-js",
             "steps.js": "qb-steps-js",
             "executor.js": "qb-executor-js",
             "main.js": "qb-main-js",
