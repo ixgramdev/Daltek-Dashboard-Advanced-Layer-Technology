@@ -41,8 +41,6 @@
         dropdown.innerHTML = ""; // Limpiar dropdown
 
         if (response.message && response.message.length > 0) {
-          console.log("DocTypes encontrados:", response.message.length);
-
           const standardDoctypes = response.message.filter((dt) => !dt.custom);
           const customDoctypes = response.message.filter((dt) => dt.custom);
 
@@ -94,17 +92,9 @@
           window.QueryBuilderSteps.allDoctypeItems = Array.from(
             dropdown.querySelectorAll(".dropdown-item"),
           );
-
-          console.log(
-            "DocTypes cargados - Estándar:",
-            standardDoctypes.length,
-            "Custom:",
-            customDoctypes.length,
-          );
         } else {
           dropdown.innerHTML =
             '<div class="dropdown-item">No se encontraron DocTypes</div>';
-          console.warn("No se encontraron DocTypes");
         }
 
         // Ocultar dropdown inicialmente
@@ -182,8 +172,6 @@
     window.QueryBuilderSteps.allFieldItems = Array.from(
       fieldsDropdown.querySelectorAll(".dropdown-item"),
     );
-
-    console.log("Campos cargados:", fields.length);
   };
 
   // ✅ NUEVA FUNCIÓN: Seleccionar un campo
