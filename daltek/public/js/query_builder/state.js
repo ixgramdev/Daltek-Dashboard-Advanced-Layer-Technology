@@ -1,17 +1,17 @@
 // Estado global y mockDB
-// Se ejecuta en el contexto del campo HTML de ERPNext
 
 (function (window) {
   "use strict";
 
-  // Namespace para evitar conflictos globales
   window.QueryBuilderState = window.QueryBuilderState || {};
 
-  // Estado de la aplicación
   window.QueryBuilderState.state = {
     table: null,
+    tableName: null,
+    doctypeName: null,
     selectedCols: [],
     filters: [],
+    availableFields: [],
   };
 
   // Base de datos mock para pruebas

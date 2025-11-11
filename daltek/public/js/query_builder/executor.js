@@ -3,8 +3,9 @@ function escapeSql(s) {
 }
 
 function buildSQL() {
+  const state = window.QueryBuilderState.state;
   const select = state.selectedCols.join(", ");
-  const from = state.table;
+  const from = state.tableName || state.table; // Usar tableName si está disponible
 
   let where = "";
   if (state.filters.length) {
@@ -24,7 +25,7 @@ function buildSQL() {
     where = " WHERE " + conds.join(" AND ");
   }
 
-  return `SELECT ${select} FROM ${from}${where};`;
+  return `SELECT ${select} FROM \`${from}\`${where}`;
 }
 
 function parseVal(v) {

@@ -1,42 +1,88 @@
 // Inicialización del sistema
 
 function init() {
-  populateTableSelect();
+  window.QueryBuilderSteps.populateTableSelect();
 
-  tableHint.textContent = "Comienza seleccionando una tabla";
+  const dom = window.QueryBuilderUI.dom;
 
-  tableSelect.addEventListener("change", handleTableChange);
-  addColBtn.addEventListener("click", handleAddColumn);
-  selectAllCols.addEventListener("click", handleSelectAllColumns);
+  dom.tableHint.textContent = "Comienza seleccionando un DocType";
 
-  addFilterBtn.addEventListener("click", addFilterRow);
+  dom.tableSelect.addEventListener(
+    "change",
+    window.QueryBuilderSteps.handleTableChange,
+  );
+  dom.addColBtn.addEventListener(
+    "click",
+    window.QueryBuilderSteps.handleAddColumn,
+  );
+  dom.selectAllCols.addEventListener(
+    "click",
+    window.QueryBuilderSteps.handleSelectAllColumns,
+  );
 
-  runBtn.addEventListener("click", () => {
-    if (!state.table) return alert("Selecciona una tabla");
-    if (!state.selectedCols.length) return alert("Selecciona columnas");
+  dom.addFilterBtn.addEventListener(
+    "click",
+    window.QueryBuilderSteps.addFilterRow,
+  );
+
+  dom.runBtn.addEventListener("click", () => {
+    const state = window.QueryBuilderState.state;
+
+    if (!state.table) return frappe.msgprint("Selecciona un DocType");
+    if (!state.selectedCols.length)
+      return frappe.msgprint("Selecciona columnas");
 
     const sql = buildSQL();
-    sqlArea.value = sql;
+    dom.sqlArea.value = sql;
 
-    if (showSqlChk.checked) sqlCard.style.display = "block";
+    if (dom.showSqlChk.checked) dom.sqlCard.style.display = "block";
 
-    const result = executeMockQuery();
-    renderResults(result);
-    resultsSection.style.display = "block";
+    frappe.call({
+      method: "daltek.daltek.doctype.daltek.daltek.execute_query_builder_sql",
+      args: {
+        sql_query: sql,
+        limit: 100,
+      },
+      callback: function (response) {
+        if (response.message && response.message.success) {
+          window.QueryBuilderUI.renderResults(response.message.data);
+          dom.resultsSection.style.display = "block";
+
+          frappe.show_alert({
+            message: response.message.message,
+            indicator: "green",
+          });
+        } else {
+          frappe.msgprint({
+            title: "Error en la consulta",
+            message: response.message.error || "Error desconocido",
+            indicator: "red",
+          });
+        }
+      },
+      error: function (error) {
+        console.error("Error ejecutando consulta:", error);
+        frappe.msgprint({
+          title: "Error de conexión",
+          message: "No se pudo ejecutar la consulta: " + error.message,
+          indicator: "red",
+        });
+      },
+    });
   });
 
-  resetBtn.addEventListener("click", () => {
+  dom.resetBtn.addEventListener("click", () => {
     location.reload();
   });
 
-  showSqlChk.addEventListener("change", () => {
-    sqlCard.style.display = showSqlChk.checked ? "block" : "none";
+  dom.showSqlChk.addEventListener("change", () => {
+    dom.sqlCard.style.display = dom.showSqlChk.checked ? "block" : "none";
   });
 
-  themeToggle.addEventListener("click", () => {
+  dom.themeToggle.addEventListener("click", () => {
     const root = document.documentElement;
     root.classList.toggle("dark");
-    themeToggle.textContent = root.classList.contains("dark")
+    dom.themeToggle.textContent = root.classList.contains("dark")
       ? "Modo claro"
       : "Modo oscuro";
   });
