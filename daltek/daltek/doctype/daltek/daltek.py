@@ -70,8 +70,74 @@ def get_query_builder_html():
     except FileNotFoundError as e:
         error_msg = f"Error: No se encontró el archivo del Query Builder: {str(e)}"
         frappe.log_error(error_msg)
-        return f"<div style='padding: 20px; color: red;'>{error_msg}</div>"
+        return f"<div style='padding: 20px; color: red; '>{error_msg}</div>"
     except Exception as e:
         error_msg = f"Error cargando Query Builder: {str(e)}"
+        frappe.log_error(error_msg)
+        return f"<div style='padding: 20px; color: red; '>{error_msg}</div>"
+
+
+@frappe.whitelist()
+def get_drag_drop_html():
+    """
+    Retorna el HTML completo del sistema Drag and Drop para renderizar en un campo HTML.
+    Combina el HTML base con todos los archivos JS necesarios de forma modular.
+    """
+    try:
+        app_path = frappe.get_app_path("daltek")
+        drag_drop_path = os.path.join(app_path, "public", "js", "drag_and_drop")
+
+        # Leer archivos en el orden correcto
+        files_to_load = [
+            ("index.html", "html"),
+            ("state.js", "js"),
+            ("ui.js", "js"),
+            ("grid.js", "js"),
+            ("widgets.js", "js"),
+            ("main.js", "js"),
+        ]
+
+        html_content = ""
+        js_contents = {}
+
+        for filename, file_type in files_to_load:
+            file_path = os.path.join(drag_drop_path, filename)
+
+            if not os.path.exists(file_path):
+                frappe.log_error(f"Archivo no encontrado: {file_path}")
+                continue
+
+            with open(file_path, encoding="utf-8") as f:
+                content = f.read()
+
+                if file_type == "html":
+                    html_content = content
+                else:
+                    js_contents[filename] = content
+
+        # Inyectar los JS en los placeholders del HTML
+        placeholder_map = {
+            "state.js": "dd-state-js",
+            "ui.js": "dd-ui-js",
+            "grid.js": "dd-grid-js",
+            "widgets.js": "dd-widgets-js",
+            "main.js": "dd-main-js",
+        }
+
+        for js_file, placeholder_id in placeholder_map.items():
+            if js_file in js_contents:
+                html_content = html_content.replace(
+                    f'<script id="{placeholder_id}">\n// ============ {js_file} ============\n</script>',
+                    f'<script id="{placeholder_id}">\n{js_contents[js_file]}\n</script>',
+                )
+
+        return html_content
+
+    except FileNotFoundError as e:
+        error_msg = f"Error: No se encontró el archivo del Drag and Drop: {str(e)}"
+        frappe.log_error(error_msg)
+        return f"<div style='padding: 20px; color: red;'>{error_msg}</div>"
+    except Exception as e:
+        error_msg = f"Error cargando Drag and Drop: {str(e)}"
         frappe.log_error(error_msg)
         return f"<div style='padding: 20px; color: red;'>{error_msg}</div>"

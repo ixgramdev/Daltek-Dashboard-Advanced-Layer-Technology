@@ -2,9 +2,10 @@ frappe.ui.form.on("Daltek", {
   onload(frm) {
     if (!frm.drag_drop_initialized) {
       frm.drag_drop_initialized = true;
+      // Cargar widgets.js primero, luego cargar el sistema drag and drop
       frappe.require("/assets/daltek/js/widgets.js", function () {
         console.log("Widgets cargados:", availableWidgets);
-        init_drag_drop_view(frm);
+        load_drag_drop_system(frm);
       });
     }
   },
@@ -35,6 +36,46 @@ function load_query_builder(frm) {
   });
 }
 
+// Función para cargar el sistema Drag and Drop en el campo HTML
+function load_drag_drop_system(frm) {
+  frappe.call({
+    method: "daltek.daltek.doctype.daltek.daltek.get_drag_drop_html",
+    callback: function (r) {
+      if (r.message) {
+        // Inyectar el HTML en el campo
+        frm.fields_dict.drag_drop_html.$wrapper.html(r.message);
+
+        // Esperar a que el DOM esté listo y luego inicializar el sistema
+        setTimeout(function () {
+          if (
+            typeof window.initDragDropSystem === "function" &&
+            typeof availableWidgets !== "undefined"
+          ) {
+            console.log(
+              "Inicializando sistema Drag and Drop con widgets:",
+              availableWidgets,
+            );
+            window.initDragDropSystem(frm, availableWidgets);
+          } else {
+            console.error(
+              "Sistema Drag and Drop no disponible o widgets no cargados",
+            );
+          }
+        }, 100);
+      }
+    },
+    error: function (err) {
+      console.error("Error cargando Drag and Drop:", err);
+      frm.fields_dict.drag_drop_html.$wrapper.html(
+        "<div style='padding: 20px; color: red;'>Error al cargar Drag and Drop</div>",
+      );
+    },
+  });
+}
+
+// ============ CÓDIGO ANTERIOR (YA NO SE USA) ============
+// Se mantiene comentado por si se necesita referencia
+/*
 function init_drag_drop_view(frm) {
   const wrapper = frm.fields_dict["drag_drop_html"].wrapper;
   wrapper.innerHTML = "";
@@ -270,3 +311,5 @@ function renderWidgets(frm, grid) {
     });
   });
 }
+*/
+// ============ FIN DEL CÓDIGO ANTERIOR ============

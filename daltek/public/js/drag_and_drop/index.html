@@ -1,0 +1,202 @@
+<div class="dd-wrapper" id="dragDropApp"></div>
+  <style>
+:root {
+  --dd-bg: #f8f9fa;
+  --dd-canvas-bg: #f8f9fa;
+  --dd-text: #1f272f;
+  --dd-border: #dee2e6;
+  --dd-sidebar-bg: #ffffff;
+  --dd-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark .dd-wrapper {
+  --dd-bg: #1b1b1b;
+  --dd-canvas-bg: #171717;
+  --dd-text: #e6e6e6;
+  --dd-border: #333;
+  --dd-sidebar-bg: #2a2a2a;
+}
+
+.dd-wrapper {
+  background: var(--dd-bg);
+  color: var(--dd-text);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.dd-layout {
+  display: flex;
+  height: 600px;
+  overflow: hidden;
+}
+
+.dd-canvas {
+  flex: 1;
+  padding: 10px;
+  height: 60vh;
+  min-height: 60vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: var(--dd-canvas-bg);
+  border: 1px solid var(--dd-border);
+}
+
+.dd-sidebar {
+  width: 200px;
+  border-left: 1px solid var(--dd-border);
+  padding: 10px;
+  background: var(--dd-sidebar-bg);
+}
+
+.dd-sidebar h5 {
+  margin-top: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dd-text);
+}
+
+.dd-grid-container {
+  width: 100%;
+  min-height: 100%;
+  padding: 15px;
+}
+
+.dd-widget-item {
+  margin-bottom: 10px;
+  cursor: grab;
+  user-select: none;
+}
+
+.dd-widget-item:active {
+  cursor: grabbing;
+}
+
+.grid-stack-item-content {
+  padding: 0;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.dd-widget-card {
+  margin: 3px;
+  padding: 8px;
+  border-radius: 6px;
+  height: calc(100% - 6px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.dd-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.dd-widget-title {
+  font-size: 11px;
+  color: white;
+  margin: 0;
+  font-weight: 600;
+}
+
+.dd-widget-config-btn {
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.dd-widget-config-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dd-widget-number {
+  font-size: 20px;
+  color: white;
+  display: block;
+  text-align: center;
+  font-weight: bold;
+  position: relative;
+  z-index: 2;
+}
+
+.dd-widget-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 15px;
+  height: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: se-resize;
+  z-index: 3;
+  border-radius: 3px 0 6px 0;
+}
+
+@media (max-width: 768px) {
+  .dd-layout {
+    flex-direction: column;
+  }
+
+  .dd-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--dd-border);
+  }
+
+  .dd-grid-container {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dd-grid-container {
+    padding: 5px;
+  }
+}
+  </style>
+
+  <div class="dd-layout">
+    <!-- Canvas principal para el grid -->
+    <div class="dd-canvas" id="ddCanvas">
+      <div class="dd-grid-container" id="ddGridContainer"></div>
+    </div>
+
+    <!-- Sidebar con widgets disponibles -->
+    <div class="dd-sidebar" id="ddSidebar">
+      <h5>Dashboard Widgets</h5>
+      <div id="ddWidgetList"></div>
+    </div>
+  </div>
+</div>
+
+<script id="dd-state-js">
+// ============ state.js ============
+</script>
+
+<script id="dd-ui-js">
+// ============ ui.js ============
+</script>
+
+<script id="dd-grid-js">
+// ============ grid.js ============
+</script>
+
+<script id="dd-widgets-js">
+// ============ widgets.js ============
+</script>
+
+<script id="dd-main-js">
+// ============ main.js ============
+</script>
