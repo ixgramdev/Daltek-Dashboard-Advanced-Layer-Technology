@@ -31,7 +31,9 @@
   {
    "fieldname": "name1",
    "fieldtype": "Data",
-   "label": "Name"
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_inwv",
@@ -76,8 +78,10 @@
   {
    "fieldname": "dashboard_owner",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Owner",
-   "options": "User"
+   "options": "User",
+   "reqd": 1
   },
   {
    "fieldname": "date_created",
@@ -95,12 +99,11 @@
    "default": "0",
    "fieldname": "is_public",
    "fieldtype": "Check",
-   "label": "Is Public?"
+   "label": "Is Public"
   },
   {
    "fieldname": "query_data_storage",
    "fieldtype": "JSON",
-   "hidden": 1,
    "label": "Query Data Storage"
   },
   {
@@ -111,7 +114,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-11 13:04:20.176591",
+ "modified": "2025-11-11 14:13:46.682958",
  "modified_by": "Administrator",
  "module": "Daltek",
  "name": "Daltek",
@@ -133,5 +136,6 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "title_field": "name1",
  "states": []
 }
