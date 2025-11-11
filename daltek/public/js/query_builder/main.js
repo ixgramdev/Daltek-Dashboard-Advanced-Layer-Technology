@@ -1,91 +1,190 @@
 // Inicialización del sistema
 
 function init() {
+  // ✅ Inicializar vistas
+  if (window.QueryBuilderViews) {
+    window.QueryBuilderViews.loadSavedQueries();
+    window.QueryBuilderViews.showListView();
+  }
+
+  // ✅ Poblar el dropdown de búsqueda
   window.QueryBuilderSteps.populateTableSelect();
 
   const dom = window.QueryBuilderUI.dom;
+  const searchInput = document.getElementById("search");
+  const dropdown = document.getElementById("dropdown");
 
-  dom.tableHint.textContent = "Comienza seleccionando un DocType";
+  dom.tableHint.textContent = "Comienza escribiendo para buscar un DocType";
 
-  dom.tableSelect.addEventListener(
-    "change",
-    window.QueryBuilderSteps.handleTableChange,
-  );
-  dom.addColBtn.addEventListener(
-    "click",
-    window.QueryBuilderSteps.handleAddColumn,
-  );
-  dom.selectAllCols.addEventListener(
-    "click",
-    window.QueryBuilderSteps.handleSelectAllColumns,
-  );
+  // ✅ Event listeners para el campo de búsqueda
+  if (searchInput && dropdown) {
+    // Filtrar items mientras el usuario escribe
+    searchInput.addEventListener("input", function () {
+      const query = this.value.toLowerCase();
+      dropdown.style.display = "block";
 
-  dom.addFilterBtn.addEventListener(
-    "click",
-    window.QueryBuilderSteps.addFilterRow,
-  );
+      const allItems = window.QueryBuilderSteps.allDoctypeItems || [];
+      const groupTitles = dropdown.querySelectorAll(".dropdown-group-title");
+      let visibleCount = 0;
 
-  dom.runBtn.addEventListener("click", () => {
-    const state = window.QueryBuilderState.state;
-
-    if (!state.table) return frappe.msgprint("Selecciona un DocType");
-    if (!state.selectedCols.length)
-      return frappe.msgprint("Selecciona columnas");
-
-    const sql = buildSQL();
-    dom.sqlArea.value = sql;
-
-    if (dom.showSqlChk.checked) dom.sqlCard.style.display = "block";
-
-    frappe.call({
-      method: "daltek.daltek.doctype.daltek.daltek.execute_query_builder_sql",
-      args: {
-        sql_query: sql,
-        limit: 100,
-      },
-      callback: function (response) {
-        if (response.message && response.message.success) {
-          window.QueryBuilderUI.renderResults(response.message.data);
-          dom.resultsSection.style.display = "block";
-
-          frappe.show_alert({
-            message: response.message.message,
-            indicator: "green",
-          });
+      // Filtrar items
+      allItems.forEach((item) => {
+        const text = item.textContent.toLowerCase();
+        if (text.includes(query)) {
+          item.style.display = "block";
+          visibleCount++;
         } else {
-          frappe.msgprint({
-            title: "Error en la consulta",
-            message: response.message.error || "Error desconocido",
-            indicator: "red",
-          });
+          item.style.display = "none";
         }
-      },
-      error: function (error) {
-        console.error("Error ejecutando consulta:", error);
-        frappe.msgprint({
-          title: "Error de conexión",
-          message: "No se pudo ejecutar la consulta: " + error.message,
-          indicator: "red",
-        });
-      },
+      });
+
+      // Mostrar/ocultar títulos de grupo según si tienen items visibles
+      groupTitles.forEach((title) => {
+        let hasVisibleItems = false;
+        let sibling = title.nextElementSibling;
+
+        while (sibling && !sibling.classList.contains("dropdown-group-title")) {
+          if (
+            sibling.classList.contains("dropdown-item") &&
+            sibling.style.display !== "none"
+          ) {
+            hasVisibleItems = true;
+            break;
+          }
+          sibling = sibling.nextElementSibling;
+        }
+
+        title.style.display = hasVisibleItems ? "block" : "none";
+      });
+
+      // Mensaje si no hay coincidencias
+      if (visibleCount === 0) {
+        dropdown.innerHTML =
+          '<div class="dropdown-item" style="color: var(--qb-muted); cursor: default;">No se encontraron coincidencias</div>';
+      }
     });
-  });
 
-  dom.resetBtn.addEventListener("click", () => {
-    location.reload();
-  });
+    // Mostrar dropdown al enfocar
+    searchInput.addEventListener("focus", function () {
+      if (
+        window.QueryBuilderSteps.allDoctypeItems &&
+        window.QueryBuilderSteps.allDoctypeItems.length > 0
+      ) {
+        dropdown.style.display = "block";
+      }
+    });
 
-  dom.showSqlChk.addEventListener("change", () => {
-    dom.sqlCard.style.display = dom.showSqlChk.checked ? "block" : "none";
-  });
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener("click", function (e) {
+      if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = "none";
+      }
+    });
+  }
 
-  dom.themeToggle.addEventListener("click", () => {
-    const root = document.documentElement;
-    root.classList.toggle("dark");
-    dom.themeToggle.textContent = root.classList.contains("dark")
-      ? "Modo claro"
-      : "Modo oscuro";
-  });
+  // ✅ Event listeners para el campo de búsqueda de campos
+  const fieldsSearch = document.getElementById("fieldsSearch");
+  const fieldsDropdown = document.getElementById("fieldsDropdown");
+
+  if (fieldsSearch && fieldsDropdown) {
+    // Filtrar campos mientras el usuario escribe
+    fieldsSearch.addEventListener("input", function () {
+      const query = this.value.toLowerCase();
+      fieldsDropdown.style.display = "block";
+
+      const allItems = window.QueryBuilderSteps.allFieldItems || [];
+      const groupTitles = fieldsDropdown.querySelectorAll(
+        ".dropdown-group-title",
+      );
+      let visibleCount = 0;
+
+      // Filtrar items
+      allItems.forEach((item) => {
+        const text = item.textContent.toLowerCase();
+        if (text.includes(query)) {
+          item.style.display = "block";
+          visibleCount++;
+        } else {
+          item.style.display = "none";
+        }
+      });
+
+      // Mostrar/ocultar títulos de grupo según si tienen items visibles
+      groupTitles.forEach((title) => {
+        let hasVisibleItems = false;
+        let sibling = title.nextElementSibling;
+
+        while (sibling && !sibling.classList.contains("dropdown-group-title")) {
+          if (
+            sibling.classList.contains("dropdown-item") &&
+            sibling.style.display !== "none"
+          ) {
+            hasVisibleItems = true;
+            break;
+          }
+          sibling = sibling.nextElementSibling;
+        }
+
+        title.style.display = hasVisibleItems ? "block" : "none";
+      });
+
+      // Mensaje si no hay coincidencias
+      if (visibleCount === 0) {
+        fieldsDropdown.innerHTML =
+          '<div class="dropdown-item" style="color: var(--qb-muted); cursor: default;">No se encontraron coincidencias</div>';
+      }
+    });
+
+    // Mostrar dropdown al enfocar
+    fieldsSearch.addEventListener("focus", function () {
+      if (
+        window.QueryBuilderSteps.allFieldItems &&
+        window.QueryBuilderSteps.allFieldItems.length > 0
+      ) {
+        fieldsDropdown.style.display = "block";
+      }
+    });
+
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener("click", function (e) {
+      if (
+        !fieldsSearch.contains(e.target) &&
+        !fieldsDropdown.contains(e.target)
+      ) {
+        fieldsDropdown.style.display = "none";
+      }
+    });
+  }
+
+  // Event listeners para botones principales
+  if (dom.addColBtn) {
+    dom.addColBtn.addEventListener(
+      "click",
+      window.QueryBuilderSteps.handleAddColumn,
+    );
+  }
+
+  if (dom.selectAllCols) {
+    dom.selectAllCols.addEventListener(
+      "click",
+      window.QueryBuilderSteps.handleSelectAllColumns,
+    );
+  }
+
+  if (dom.addFilterBtn) {
+    dom.addFilterBtn.addEventListener(
+      "click",
+      window.QueryBuilderSteps.addFilterRow,
+    );
+  }
+
+  if (dom.resetBtn) {
+    dom.resetBtn.addEventListener("click", () => {
+      if (window.QueryBuilderViews && window.QueryBuilderViews.resetBuilder) {
+        window.QueryBuilderViews.resetBuilder();
+      }
+    });
+  }
 }
 
 init();
