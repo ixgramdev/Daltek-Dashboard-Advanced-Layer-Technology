@@ -343,9 +343,8 @@ def save_query(doc_name, query_data):
             "columns": query_data.get("columns", []),
             "filters": query_data.get("filters", []),
             "description": query_data.get("description", ""),
+            "created_by": query_data.get("created_by") or frappe.session.user,
             "created_at": query_data.get("created_at") or frappe.utils.now(),
-            "modified_at": frappe.utils.now(),
-            "created_by": frappe.session.user,
         }
 
         query_index = -1
