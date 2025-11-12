@@ -8,21 +8,17 @@ from frappe.model.document import Document
 
 
 class Daltek(Document):
-    pass
+    def before_save(self):
+        current_datetime = frappe.utils.now()
+
+        if not self.date_created:
+            self.date_created = current_datetime
+
+        self.last_modified = current_datetime
 
 
 @frappe.whitelist()
 def execute_query_builder_sql(sql_query, limit=100):
-    """
-    Ejecuta una consulta SQL generada por el Query Builder de forma segura.
-
-    Args:
-        sql_query (str): La consulta SQL a ejecutar
-        limit (int): Límite máximo de filas a retornar (default: 100)
-
-    Returns:
-        dict: Diccionario con los resultados de la consulta
-    """
     try:
         # Validaciones de seguridad
         if not sql_query or not sql_query.strip():
