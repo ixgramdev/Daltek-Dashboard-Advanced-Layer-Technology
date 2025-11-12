@@ -9,7 +9,7 @@
   const getMockDB = () => window.QueryBuilderState.mockDB;
   const dom = window.QueryBuilderUI.dom;
 
-  // ✅ NUEVA FUNCIÓN: Poblar el dropdown de búsqueda
+  //  NUEVA FUNCIÓN: Poblar el dropdown de búsqueda
   window.QueryBuilderSteps.populateTableSelect = function () {
     const searchInput = document.getElementById("search");
     const dropdown = document.getElementById("dropdown");
@@ -33,7 +33,6 @@
           istable: 0,
           issingle: 0,
           is_virtual: 0,
-          name: ["!=", "Daltek"],
         },
         limit_page_length: 0,
         order_by: "name",
@@ -45,7 +44,7 @@
           const standardDoctypes = response.message.filter((dt) => !dt.custom);
           const customDoctypes = response.message.filter((dt) => dt.custom);
 
-          // ✅ Crear grupo de DocTypes Estándar
+          // Crear grupo de DocTypes Estándar
           if (standardDoctypes.length > 0) {
             const groupTitle = document.createElement("div");
             groupTitle.className = "dropdown-group-title";
@@ -67,7 +66,7 @@
             });
           }
 
-          // ✅ Crear grupo de DocTypes Personalizados
+          //  Crear grupo de DocTypes Personalizados
           if (customDoctypes.length > 0) {
             const groupTitle = document.createElement("div");
             groupTitle.className = "dropdown-group-title";
@@ -89,7 +88,7 @@
             });
           }
 
-          // ✅ Guardar todos los items para filtrado
+          // Guardar todos los items para filtrado
           window.QueryBuilderSteps.allDoctypeItems = Array.from(
             dropdown.querySelectorAll(".dropdown-item"),
           );
@@ -110,7 +109,7 @@
     });
   };
 
-  // ✅ NUEVA FUNCIÓN: Seleccionar un DocType
+  //  NUEVA FUNCIÓN: Seleccionar un DocType
   function selectDoctype(item, searchInput, dropdown) {
     searchInput.value = item.textContent;
     searchInput.dataset.value = item.dataset.value;
@@ -121,7 +120,7 @@
     window.QueryBuilderSteps.handleTableChange();
   }
 
-  // ✅ NUEVA FUNCIÓN: Poblar el dropdown de campos con grupos por tipo
+  //  NUEVA FUNCIÓN: Poblar el dropdown de campos con grupos por tipo
   window.QueryBuilderSteps.populateFieldsDropdown = function (fields) {
     const fieldsDropdown = dom.fieldsDropdown;
 
@@ -175,7 +174,7 @@
     );
   };
 
-  // ✅ NUEVA FUNCIÓN: Seleccionar un campo
+  //  NUEVA FUNCIÓN: Seleccionar un campo
   function selectField(item) {
     const fieldsSearch = dom.fieldsSearch;
     const fieldsDropdown = dom.fieldsDropdown;
@@ -188,7 +187,7 @@
     fieldsDropdown.style.display = "none";
   }
 
-  // ✅ FUNCIÓN MODIFICADA: Manejar cambio de tabla
+  //  FUNCIÓN MODIFICADA: Manejar cambio de tabla
   window.QueryBuilderSteps.handleTableChange = function () {
     const state = getState();
     const searchInput = document.getElementById("search");
