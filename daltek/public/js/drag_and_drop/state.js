@@ -30,14 +30,23 @@
   };
 
   window.DragDropState.getWidgets = function () {
-    return this.state.frm && this.state.frm.doc.layout_json
-      ? this.state.frm.doc.layout_json
-      : [];
+    if (!this.state.frm || !this.state.frm.doc.layout) {
+      return [];
+    }
+    let layout = this.state.frm.doc.layout;
+    if (typeof layout === "string") {
+      try {
+        layout = JSON.parse(layout);
+      } catch (e) {
+        layout = [];
+      }
+    }
+    return Array.isArray(layout) ? layout : [];
   };
 
   window.DragDropState.saveWidgets = function (widgets) {
     if (this.state.frm) {
-      this.state.frm.set_value("layout_json", widgets);
+      this.state.frm.set_value("layout", JSON.stringify(widgets));
     }
   };
 
