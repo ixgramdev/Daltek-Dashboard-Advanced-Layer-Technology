@@ -38,27 +38,22 @@
 
   // Manejar cambios en el grid (movimiento/resize)
   window.DragDropGrid.handleGridChange = function (items) {
-    const widgets = State.getWidgets();
-    const updatedWidgets = items
-      .map((item) => {
-        const original = widgets.find((w) => w.id === item.el.dataset.widgetId);
-        if (!original) return null;
+    let widgets = State.getWidgets();
+    if (!Array.isArray(widgets)) widgets = [];
 
-        return {
-          id: original.id,
-          type: original.type,
-          position: {
-            col: item.x,
-            row: item.y,
-            width: item.w,
-            height: item.h,
-          },
-          properties: { ...original.properties },
+    // Actualizar solo los widgets afectados
+    items.forEach((item) => {
+      const idx = widgets.findIndex((w) => w.id === item.el.dataset.widgetId);
+      if (idx !== -1) {
+        widgets[idx].position = {
+          col: item.x,
+          row: item.y,
+          width: item.w,
+          height: item.h,
         };
-      })
-      .filter(Boolean);
-
-    State.saveWidgets(updatedWidgets);
+      }
+    });
+    State.saveWidgets(widgets);
   };
 
   // Añadir un widget al grid
@@ -69,6 +64,7 @@
       return;
     }
 
+    // Usar un id único pero consistente para el widget
     const id = widgetData.id + "_" + Date.now();
     const node = document.createElement("div");
     node.className = "grid-stack-item";
@@ -88,7 +84,6 @@
 
     grid.addWidget(node, { x: position.x, y: position.y, w: 2, h: 4 });
 
-    // Guardar en el estado
     State.addWidget({
       id: id,
       type: widgetData.type,
@@ -115,13 +110,19 @@
     }
 
     widgets.forEach((widget) => {
-      const id = widget.id + "_" + Date.now();
+      // Usar el id original del widget para que coincida con el layout
       const node = document.createElement("div");
       node.className = "grid-stack-item";
-      node.dataset.widgetId = id;
+      node.dataset.widgetId = widget.id;
       node.dataset.widgetType = widget.type;
 
       node.innerHTML = UI.createWidgetHTML(widget);
+
+      // Setear atributos gs-x, gs-y, gs-w, gs-h para que GridStack los use
+      node.setAttribute("gs-x", widget.position.col || widget.position.x || 0);
+      node.setAttribute("gs-y", widget.position.row || widget.position.y || 0);
+      node.setAttribute("gs-w", widget.position.width || 2);
+      node.setAttribute("gs-h", widget.position.height || 4);
 
       grid.addWidget(node, {
         x: widget.position.col || widget.position.x || 0,
