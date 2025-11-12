@@ -33,6 +33,7 @@
           istable: 0,
           issingle: 0,
           is_virtual: 0,
+          name: ["!=", "Daltek"],
         },
         limit_page_length: 0,
         order_by: "name",
