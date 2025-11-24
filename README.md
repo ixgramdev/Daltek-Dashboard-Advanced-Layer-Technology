@@ -23,7 +23,8 @@ Nota: ejecuta estos comandos desde la carpeta raíz de tu bench (p. ej. `frappe-
 
 ```bash
 # desde la carpeta frappe-bench
-# git clone <repo> apps/daltek
+# bench get-app git@github.com:ixgramdev/Daltek-Dashboard-Advanced-Layer-Technology.git  // Clave SSH
+# bench get-app https://github.com/ixgramdev/Daltek-Dashboard-Advanced-Layer-Technology.git // Clave HTTPS
 ```
 
 2) Instalar la app en tu sitio:
@@ -33,13 +34,17 @@ Nota: ejecuta estos comandos desde la carpeta raíz de tu bench (p. ej. `frappe-
 ```bash
 bench --site NOMBRE_DEL_SITIO install-app daltek
 bench --site NOMBRE_DEL_SITIO migrate
-bench restart
 ```
 
 - Si tu bench tiene un sitio por defecto configurado, puedes omitir `--site` y usar los comandos globales:
 
 ```bash
 bench install-app daltek
+```
+
+- Registrar los cambios en el contenedor (Comandos Globales):
+
+```bash
 bench migrate
 bench restart
 ```
