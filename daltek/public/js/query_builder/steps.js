@@ -9,17 +9,15 @@
   const getMockDB = () => window.QueryBuilderState.mockDB;
   const dom = window.QueryBuilderUI.dom;
 
-  //  NUEVA FUNCIÓN: Poblar el dropdown de búsqueda
   window.QueryBuilderSteps.populateTableSelect = function () {
     const searchInput = document.getElementById("search");
     const dropdown = document.getElementById("dropdown");
 
     if (!searchInput || !dropdown) {
-      console.error("Elementos de búsqueda no encontrados");
+      console.error("Elementos de búsqueda no encontrados"); // Revisar si se puede pasar este mensaje del lado del server (Validando)
       return;
     }
 
-    // Mostrar estado de carga
     dropdown.innerHTML =
       '<div class="dropdown-item">Cargando DocTypes...</div>';
     dropdown.style.display = "block";
@@ -38,13 +36,12 @@
         order_by: "name",
       },
       callback: function (response) {
-        dropdown.innerHTML = ""; // Limpiar dropdown
+        dropdown.innerHTML = "";
 
         if (response.message && response.message.length > 0) {
           const standardDoctypes = response.message.filter((dt) => !dt.custom);
           const customDoctypes = response.message.filter((dt) => dt.custom);
 
-          // Crear grupo de DocTypes Estándar
           if (standardDoctypes.length > 0) {
             const groupTitle = document.createElement("div");
             groupTitle.className = "dropdown-group-title";
@@ -66,7 +63,6 @@
             });
           }
 
-          //  Crear grupo de DocTypes Personalizados
           if (customDoctypes.length > 0) {
             const groupTitle = document.createElement("div");
             groupTitle.className = "dropdown-group-title";
@@ -88,7 +84,6 @@
             });
           }
 
-          // Guardar todos los items para filtrado
           window.QueryBuilderSteps.allDoctypeItems = Array.from(
             dropdown.querySelectorAll(".dropdown-item"),
           );
@@ -97,7 +92,6 @@
             '<div class="dropdown-item">No se encontraron DocTypes</div>';
         }
 
-        // Ocultar dropdown inicialmente
         dropdown.style.display = "none";
       },
       error: function (error) {
@@ -262,6 +256,14 @@
     if (!state.selectedCols.includes(col)) {
       state.selectedCols.push(col);
       window.QueryBuilderUI.renderSelectedCols();
+
+      // Triggear auto-guardado cuando se agregan columnas
+      if (
+        window.QueryBuilderViews &&
+        window.QueryBuilderViews.triggerAutoSave
+      ) {
+        window.QueryBuilderViews.triggerAutoSave();
+      }
     }
 
     // Limpiar el campo de búsqueda después de agregar
@@ -282,6 +284,11 @@
 
     window.QueryBuilderUI.renderSelectedCols();
     dom.filtersSection.style.display = "block";
+
+    // Triggear auto-guardado cuando se seleccionan todas las columnas
+    if (window.QueryBuilderViews && window.QueryBuilderViews.triggerAutoSave) {
+      window.QueryBuilderViews.triggerAutoSave();
+    }
   };
 
   window.QueryBuilderSteps.addFilterRow = function () {
@@ -355,5 +362,10 @@
     });
 
     state.filters = filters;
+
+    // Triggear auto-guardado cuando se actualizan los filtros
+    if (window.QueryBuilderViews && window.QueryBuilderViews.triggerAutoSave) {
+      window.QueryBuilderViews.triggerAutoSave();
+    }
   };
 })(window);

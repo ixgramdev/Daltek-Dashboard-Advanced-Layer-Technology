@@ -1,30 +1,17 @@
 <div class="qb-wrapper" id="queryBuilderApp">
   <style>
-:root {
-  --qb-bg: #ffffff;
-  --qb-text: #1f272f;
-  --qb-border: #dcdcdc;
-  --qb-card-bg: #fafafa;
-  --qb-muted: #6b7280;
-  --qb-accent: #4c8bf5;
-}
-
-/* Dark mode */
-.dark {
-  --qb-bg: #1b1b1b;
-  --qb-text: #e6e6e6;
-  --qb-border: #3a3a3a;
-  --qb-card-bg: #2a2a2a;
-  --qb-muted: #9ca3af;
-  --qb-accent: #5da0ff;
-}
+/* ============================================================================
+   QUERY BUILDER - ESTILOS NATIVOS DE FRAPPE/ERPNEXT
+   Usa variables CSS del tema de Frappe para integración perfecta
+   ============================================================================ */
 
 .qb-wrapper {
-  background: var(--qb-bg);
-  color: var(--qb-text);
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  padding: 20px;
-  border-radius: 8px;
+  /* Usar variables nativas de Frappe */
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-stack);
+  padding: var(--padding-lg);
+  border-radius: var(--border-radius-md);
   width: 100%;
   min-height: 80vh;
   box-sizing: border-box;
@@ -32,471 +19,533 @@
   max-width: 100%;
 }
 
-.app {
+.qb-wrapper * {
+  box-sizing: border-box;
+}
+
+/* Contenedor principal */
+.qb-wrapper .app {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  box-sizing: border-box;
+  gap: var(--margin-md);
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-.app header {
+/* Header */
+.qb-wrapper .app header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: var(--margin-sm);
 }
 
-.app header h1 {
+.qb-wrapper .app header h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--text-2xl);
   font-weight: 600;
+  color: var(--heading-color);
 }
 
-.sub {
-  color: var(--qb-muted);
-  font-size: 13px;
-  margin-top: 2px;
+.qb-wrapper .sub {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--margin-xs);
 }
 
-.card {
-  background: var(--qb-card-bg);
-  border: 1px solid var(--qb-border);
-  border-radius: 6px;
-  padding: 14px;
-  box-sizing: border-box;
-  overflow: auto;
-  max-height: calc(100vh - 100px);
-}
-
-/* Permitir que el dropdown se salga del card */
-.left.card {
+/* Cards - usar estilos nativos de Frappe */
+.qb-wrapper .card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--padding-md);
   overflow: visible;
   max-height: none;
 }
 
-.section {
-  margin-bottom: 16px;
+/* Secciones */
+.qb-wrapper .section {
+  margin-bottom: var(--margin-md);
 }
 
-.app label {
+/* Labels - estilo nativo de Frappe */
+.qb-wrapper .app label {
   display: block;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: var(--margin-xs);
+  color: var(--text-color);
 }
 
-.app select, .app input[type="text"], .app input[type="number"] {
+/* Inputs - estilo nativo de Frappe */
+.qb-wrapper .app select,
+.qb-wrapper .app input[type="text"],
+.qb-wrapper .app input[type="number"],
+.qb-wrapper .app textarea {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid var(--qb-border);
-  background: var(--qb-bg);
-  color: var(--qb-text);
-  border-radius: 4px;
-  font-size: 14px;
-  box-sizing: border-box;
+  padding: var(--padding-sm) var(--padding-md);
+  border: 1px solid var(--border-color);
+  background: var(--control-bg);
+  color: var(--text-color);
+  border-radius: var(--border-radius);
+  font-size: var(--text-md);
+  transition: border-color 0.2s ease;
 }
 
-.app select:focus, .app input:focus {
+.qb-wrapper .app select:focus,
+.qb-wrapper .app input:focus,
+.qb-wrapper .app textarea:focus {
   outline: none;
-  border-color: var(--qb-accent);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
-.btn {
-  padding: 7px 14px;
-  background: var(--qb-accent);
-  border: none;
+.qb-wrapper .app select:hover,
+.qb-wrapper .app input:hover,
+.qb-wrapper .app textarea:hover {
+  border-color: var(--dark-border-color);
+}
+
+/* Botones - estilo nativo de Frappe */
+.qb-wrapper .btn {
+  padding: var(--padding-sm) var(--padding-md);
+  background: var(--primary);
+  border: 1px solid var(--primary);
   color: white;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-md);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--margin-xs);
 }
 
-.btn:hover {
-  filter: brightness(1.08);
+.qb-wrapper .btn:hover {
+  background: var(--primary-dark);
+  color: var(--primary-light);
+  border-color: var(--primary-dark);
+  box-shadow: var(--shadow-sm);
 }
 
-.btn.ghost {
+.qb-wrapper .btn:active {
+  transform: translateY(1px);
+}
+
+.qb-wrapper .btn.ghost {
   background: transparent;
-  border: 1px solid var(--qb-border);
-  color: var(--qb-text);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
-.btn.small {
-  padding: 5px 10px;
-  font-size: 12px;
+.qb-wrapper .btn.ghost:hover {
+  background: var(--btn-default-hover-bg);
+  border-color: var(--dark-border-color);
 }
 
-.cols-list {
+.qb-wrapper .btn.small {
+  padding: var(--padding-xs) var(--padding-sm);
+  font-size: var(--text-sm);
+}
+
+/* Chips de columnas */
+.qb-wrapper .cols-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: var(--margin-xs);
+  margin-top: var(--margin-sm);
 }
 
-.col-chip {
-  background: var(--qb-bg);
-  border: 1px solid var(--qb-border);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+.qb-wrapper .col-chip {
+  background: var(--bg-light-gray);
+  border: 1px solid var(--border-color);
+  padding: var(--padding-xs) var(--padding-sm);
+  border-radius: var(--border-radius-full);
+  font-size: var(--text-sm);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--margin-xs);
+  color: var(--text-color);
 }
 
-.filters .filter-row {
+.qb-wrapper .col-chip button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.qb-wrapper .col-chip button:hover {
+  color: var(--red-500);
+}
+
+/* Filtros */
+.qb-wrapper .filters {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: var(--margin-sm);
 }
 
-.filters .filter-row select,
-.filters .filter-row input {
+.qb-wrapper .filters .filter-row {
+  display: flex;
+  gap: var(--margin-sm);
+  align-items: center;
+}
+
+.qb-wrapper .filters .filter-row select,
+.qb-wrapper .filters .filter-row input {
   flex: 1;
 }
 
-.filters .filter-row .remove {
-  padding: 0 8px;
-  font-size: 16px;
+.qb-wrapper .filters .filter-row .remove {
+  padding: 0 var(--padding-sm);
+  font-size: var(--text-lg);
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--qb-muted);
+  color: var(--text-muted);
+  transition: color 0.2s ease;
 }
 
-.filters .filter-row .remove:hover {
-  color: red;
+.qb-wrapper .filters .filter-row .remove:hover {
+  color: var(--red-500);
 }
 
-.table-wrap {
+/* Tabla de resultados */
+.qb-wrapper .table-wrap {
   width: 100%;
   overflow: auto;
-  border: 1px solid var(--qb-border);
-  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
   max-height: 500px;
+  margin-top: var(--margin-md);
 }
 
-/* Scrollbar para tabla de resultados */
-.table-wrap::-webkit-scrollbar {
+.qb-wrapper .table-wrap::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.table-wrap::-webkit-scrollbar-track {
-  background: var(--qb-bg);
-  border-radius: 4px;
+.qb-wrapper .table-wrap::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-radius: var(--border-radius);
 }
 
-.table-wrap::-webkit-scrollbar-thumb {
-  background: var(--qb-border);
-  border-radius: 4px;
+.qb-wrapper .table-wrap::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: var(--border-radius);
 }
 
-.table-wrap::-webkit-scrollbar-thumb:hover {
-  background: var(--qb-muted);
+.qb-wrapper .table-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
 }
 
-.app table {
+.qb-wrapper .app table {
   width: 100%;
   border-collapse: collapse;
+  font-size: var(--text-md);
 }
 
-.app thead {
-  background: var(--qb-bg);
+.qb-wrapper .app thead {
+  background: var(--table-header-bg);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.app th, .app td {
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--qb-border);
-  font-size: 14px;
+.qb-wrapper .app th,
+.qb-wrapper .app td {
+  padding: var(--padding-sm) var(--padding-md);
+  border-bottom: 1px solid var(--table-border-color);
   text-align: left;
 }
 
-.app th {
+.qb-wrapper .app th {
   font-weight: 600;
-  background: var(--qb-card-bg);
+  color: var(--heading-color);
+  text-transform: uppercase;
+  font-size: var(--text-xs);
+  letter-spacing: 0.5px;
 }
 
-.empty {
-  padding: 16px;
+.qb-wrapper .app tbody tr:hover {
+  background: var(--bg-light-gray);
+}
+
+/* Estados vacíos */
+.qb-wrapper .empty,
+.qb-wrapper .empty-state {
+  padding: var(--padding-xl);
   text-align: center;
-  color: var(--qb-muted);
+  color: var(--text-muted);
 }
 
-.hint {
-  font-size: 12px;
-  color: var(--qb-muted);
+.qb-wrapper .empty-state-icon {
+  font-size: 48px;
+  margin-bottom: var(--margin-md);
+  opacity: 0.5;
 }
 
-/* Estilos para el dropdown de búsqueda */
-.search-container {
+.qb-wrapper .empty-state-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin-bottom: var(--margin-xs);
+  color: var(--heading-color);
+}
+
+.qb-wrapper .empty-state-description {
+  font-size: var(--text-md);
+  margin-bottom: var(--margin-lg);
+}
+
+.qb-wrapper .hint {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-top: var(--margin-xs);
+}
+
+/* Search Container & Dropdown */
+.qb-wrapper .search-container {
   position: relative;
   width: 100%;
 }
 
-/* Estilos comunes para ambos dropdowns */
-#dropdown,
-#fieldsDropdown {
+.qb-wrapper #dropdown,
+.qb-wrapper #fieldsDropdown {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
   max-height: 350px;
   overflow-y: auto;
-  background: var(--qb-card-bg);
-  border: 1px solid var(--qb-border);
-  border-radius: 4px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
   z-index: 1050;
   display: none;
-  margin-top: 4px;
+  margin-top: var(--margin-xs);
 }
 
-/* Altura específica para dropdown de campos */
-#fieldsDropdown {
+.qb-wrapper #fieldsDropdown {
   max-height: 300px;
 }
 
-/* Scrollbar personalizado para ambos dropdowns */
-#dropdown::-webkit-scrollbar,
-#fieldsDropdown::-webkit-scrollbar {
+.qb-wrapper #dropdown::-webkit-scrollbar,
+.qb-wrapper #fieldsDropdown::-webkit-scrollbar {
   width: 8px;
 }
 
-#dropdown::-webkit-scrollbar-track,
-#fieldsDropdown::-webkit-scrollbar-track {
-  background: var(--qb-bg);
-  border-radius: 4px;
+.qb-wrapper #dropdown::-webkit-scrollbar-track,
+.qb-wrapper #fieldsDropdown::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-radius: var(--border-radius);
 }
 
-#dropdown::-webkit-scrollbar-thumb,
-#fieldsDropdown::-webkit-scrollbar-thumb {
-  background: var(--qb-border);
-  border-radius: 4px;
+.qb-wrapper #dropdown::-webkit-scrollbar-thumb,
+.qb-wrapper #fieldsDropdown::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: var(--border-radius);
 }
 
-#dropdown::-webkit-scrollbar-thumb:hover,
-#fieldsDropdown::-webkit-scrollbar-thumb:hover {
-  background: var(--qb-muted);
+.qb-wrapper #dropdown::-webkit-scrollbar-thumb:hover,
+.qb-wrapper #fieldsDropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
 }
 
-.dropdown-group-title {
-  padding: 8px 12px;
+.qb-wrapper .dropdown-group-title {
+  padding: var(--padding-sm) var(--padding-md);
   font-weight: 600;
-  font-size: 12px;
-  color: var(--qb-muted);
-  background: var(--qb-bg);
-  border-bottom: 1px solid var(--qb-border);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--bg-light-gray);
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.dropdown-item {
-  padding: 10px 12px;
+.qb-wrapper .dropdown-item {
+  padding: var(--padding-sm) var(--padding-md);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-md);
   transition: background-color 0.15s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text-color);
 }
 
-.dropdown-item:hover {
-  background: var(--qb-accent);
+.qb-wrapper .dropdown-item:hover {
+  background: var(--primary);
   color: white;
 }
 
-/* Estilos para el menú de consultas guardadas */
-#queriesListView {
+.qb-wrapper .dropdown-item.no-match-message {
+  color: var(--text-muted);
+  cursor: default;
+  font-style: italic;
+}
+
+.qb-wrapper .dropdown-item.no-match-message:hover {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+/* Vista de listado de consultas */
+.qb-wrapper #queriesListView {
   display: none;
   max-height: none;
   overflow: visible;
 }
 
-.queries-header {
+.qb-wrapper .queries-header {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-bottom: 16px;
-  position: relative;
-  background: var(--qb-card-bg);
-  z-index: 1;
-  padding: 8px 0;
+  margin-bottom: var(--margin-md);
+  padding: var(--padding-sm) 0;
 }
 
-.queries-list {
+.qb-wrapper .queries-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--margin-md);
   max-height: calc(100vh - 200px);
   overflow-y: auto;
-  padding: 2px 8px 0 0;
+  padding: 2px var(--padding-sm) 0 0;
 }
 
-/* Scrollbar personalizado para la lista de consultas */
-.queries-list::-webkit-scrollbar {
+.qb-wrapper .queries-list::-webkit-scrollbar {
   width: 8px;
 }
 
-.queries-list::-webkit-scrollbar-track {
-  background: var(--qb-bg);
-  border-radius: 4px;
+.qb-wrapper .queries-list::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-radius: var(--border-radius);
 }
 
-.queries-list::-webkit-scrollbar-thumb {
-  background: var(--qb-border);
-  border-radius: 4px;
+.qb-wrapper .queries-list::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: var(--border-radius);
 }
 
-.queries-list::-webkit-scrollbar-thumb:hover {
-  background: var(--qb-muted);
+.qb-wrapper .queries-list::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
 }
 
-.query-card {
-  background: var(--qb-bg);
-  border: 1px solid var(--qb-border);
-  border-radius: 6px;
-  padding: 12px;
+/* Query Cards */
+.qb-wrapper .query-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--padding-md);
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
-.query-card:hover {
-  border-color: var(--qb-accent);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+.qb-wrapper .query-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
-.query-card-header {
+.qb-wrapper .query-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--margin-sm);
 }
 
-.query-card-title {
+.qb-wrapper .query-card-title {
   font-weight: 600;
-  font-size: 15px;
-  color: var(--qb-text);
+  font-size: var(--text-md);
+  color: var(--heading-color);
 }
 
-.query-card-actions {
+.qb-wrapper .query-card-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--margin-xs);
 }
 
-.query-card-actions button {
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 1px solid var(--qb-border);
+.qb-wrapper .query-card-actions button {
+  padding: var(--padding-xs) var(--padding-sm);
+  font-size: var(--text-xs);
+  border: 1px solid var(--border-color);
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--qb-text);
+  color: var(--text-color);
+  font-weight: 500;
 }
 
-.query-card-actions button:hover {
-  background: var(--qb-accent);
-  border-color: var(--qb-accent);
+.qb-wrapper .query-card-actions button:hover {
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
-.query-card-actions button.delete:hover {
-  background: #ef4444;
-  border-color: #ef4444;
+.qb-wrapper .query-card-actions button.delete:hover {
+  background: var(--red-500);
+  border-color: var(--red-500);
+  color: white;
 }
 
-.query-card-description {
-  font-size: 13px;
-  color: var(--qb-muted);
-  margin-bottom: 8px;
+.qb-wrapper .query-card-description {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--margin-sm);
+  line-height: 1.5;
 }
 
-.query-card-meta {
-  font-size: 12px;
-  color: var(--qb-muted);
+.qb-wrapper .query-card-meta {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
   display: flex;
-  gap: 12px;
+  gap: var(--margin-md);
+  flex-wrap: wrap;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--qb-muted);
-}
-
-.empty-state-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-state-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--qb-text);
-}
-
-.empty-state-description {
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-/* Botón para volver al listado */
-.back-button {
-  display: flex;
+/* Botón de volver */
+.qb-wrapper .back-button {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: var(--margin-xs);
+  padding: var(--padding-xs) var(--padding-sm);
   background: transparent;
-  border: 1px solid var(--qb-border);
-  border-radius: 4px;
-  color: var(--qb-text);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--text-color);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-sm);
+  font-weight: 500;
   transition: all 0.2s ease;
 }
 
-.back-button:hover {
-  background: var(--qb-card-bg);
-  border-color: var(--qb-accent);
+.qb-wrapper .back-button:hover {
+  background: var(--btn-default-hover-bg);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
-@media (max-width: 968px) {
-  .qb-wrapper {
-    padding: 12px;
-  }
-
-  .card {
-    max-height: none;
-  }
-
-  .queries-list {
-    max-height: calc(100vh - 150px);
-  }
-
-  .app {
-    max-width: 100%;
-  }
-}
-
-/* Estilos para el modal de guardar consulta */
-.modal-overlay {
+/* Modal - estilo nativo de Frappe */
+.qb-wrapper .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: none;
   justify-content: center;
   align-items: center;
@@ -504,7 +553,7 @@
   animation: fadeIn 0.2s ease;
 }
 
-.modal-overlay.show {
+.qb-wrapper .modal-overlay.show {
   display: flex;
 }
 
@@ -517,14 +566,14 @@
   }
 }
 
-.modal-content {
-  background: var(--qb-card-bg);
-  border: 1px solid var(--qb-border);
-  border-radius: 8px;
-  padding: 24px;
+.qb-wrapper .modal-content {
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--padding-xl);
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-2xl);
   animation: slideIn 0.3s ease;
 }
 
@@ -539,25 +588,25 @@
   }
 }
 
-.modal-header {
+.qb-wrapper .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--margin-lg);
 }
 
-.modal-title {
-  font-size: 20px;
+.qb-wrapper .modal-title {
+  font-size: var(--text-xl);
   font-weight: 600;
-  color: var(--qb-text);
+  color: var(--heading-color);
   margin: 0;
 }
 
-.modal-close {
+.qb-wrapper .modal-close {
   background: transparent;
   border: none;
-  font-size: 24px;
-  color: var(--qb-muted);
+  font-size: var(--text-2xl);
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0;
   width: 30px;
@@ -565,69 +614,119 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   transition: all 0.2s ease;
+  line-height: 1;
 }
 
-.modal-close:hover {
-  background: var(--qb-bg);
-  color: var(--qb-text);
+.qb-wrapper .modal-close:hover {
+  background: var(--bg-light-gray);
+  color: var(--text-color);
 }
 
-.modal-body {
-  margin-bottom: 20px;
+.qb-wrapper .modal-body {
+  margin-bottom: var(--margin-lg);
 }
 
-.modal-field {
-  margin-bottom: 16px;
+.qb-wrapper .modal-field {
+  margin-bottom: var(--margin-md);
 }
 
-.modal-field label {
+.qb-wrapper .modal-field label {
   display: block;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 600;
-  margin-bottom: 6px;
-  color: var(--qb-text);
+  margin-bottom: var(--margin-xs);
+  color: var(--text-color);
 }
 
-.modal-field input,
-.modal-field textarea {
+.qb-wrapper .modal-field input,
+.qb-wrapper .modal-field textarea {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--qb-border);
-  background: var(--qb-bg);
-  color: var(--qb-text);
-  border-radius: 4px;
-  font-size: 14px;
-  box-sizing: border-box;
+  padding: var(--padding-sm) var(--padding-md);
+  border: 1px solid var(--border-color);
+  background: var(--control-bg);
+  color: var(--text-color);
+  border-radius: var(--border-radius);
+  font-size: var(--text-md);
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.qb-wrapper .modal-field textarea {
+  resize: vertical;
+  min-height: 80px;
   font-family: inherit;
 }
 
-.modal-field textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.modal-field input:focus,
-.modal-field textarea:focus {
+.qb-wrapper .modal-field input:focus,
+.qb-wrapper .modal-field textarea:focus {
   outline: none;
-  border-color: var(--qb-accent);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
-.modal-field .optional {
-  color: var(--qb-muted);
+.qb-wrapper .modal-field .optional {
+  color: var(--text-muted);
   font-weight: 400;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
-.modal-footer {
+.qb-wrapper .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--margin-sm);
 }
 
-.modal-footer .btn {
+.qb-wrapper .modal-footer .btn {
   min-width: 100px;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .qb-wrapper {
+    padding: var(--padding-md);
+  }
+
+  .qb-wrapper .card {
+    max-height: none;
+  }
+
+  .qb-wrapper .queries-list {
+    max-height: calc(100vh - 150px);
+  }
+
+  .qb-wrapper .app {
+    max-width: 100%;
+  }
+
+  .qb-wrapper .filters .filter-row {
+    flex-wrap: wrap;
+  }
+
+  .qb-wrapper .query-card-meta {
+    flex-direction: column;
+    gap: var(--margin-xs);
+  }
+}
+
+/* Indicador de auto-guardado */
+.qb-wrapper #autoSaveIndicator {
+  margin-left: var(--margin-md);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Estados de carga */
+.qb-wrapper .loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Tooltips nativos de Frappe */
+.qb-wrapper [title] {
+  cursor: help;
 }
   </style>
 
@@ -697,9 +796,10 @@
         <button id="addFilterBtn" class="btn small ghost">+ Añadir filtro</button>
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:12px">
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
         <button id="saveQueryBtn" class="btn">Guardar</button>
         <button id="resetBtn" class="btn ghost">Restablecer</button>
+        <span id="autoSaveIndicator" style="margin-left:12px;font-size:12px;color:#888;"></span>
       </div>
 
     </section>
@@ -740,7 +840,7 @@
 
       <div class="modal-footer">
         <button class="btn ghost" id="cancelModalBtn">Cancelar</button>
-        <button class="btn" id="confirmSaveBtn">💾 Guardar</button>
+        <button class="btn" id="confirmSaveBtn">Guardar</button>
       </div>
     </div>
   </div>

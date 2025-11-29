@@ -50,6 +50,14 @@
         state.selectedCols = state.selectedCols.filter((x) => x !== col);
         window.QueryBuilderUI.renderSelectedCols();
         if (!state.selectedCols.length) filtersSection.style.display = "none";
+
+        // Triggear auto-guardado cuando se elimina una columna
+        if (
+          window.QueryBuilderViews &&
+          window.QueryBuilderViews.triggerAutoSave
+        ) {
+          window.QueryBuilderViews.triggerAutoSave();
+        }
       });
       colsList.appendChild(chip);
     });
