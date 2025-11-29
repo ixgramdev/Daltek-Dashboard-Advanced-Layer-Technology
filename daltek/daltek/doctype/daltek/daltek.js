@@ -47,10 +47,8 @@ function toggle_tabs_visibility(frm) {
       frm.toggle_display("editable_menu_html", should_show_tabs);
     } else if (tab_name === "query_builder_tab") {
       frm.toggle_display("query_builder_html", should_show_tabs);
-      frm.toggle_display("query_data_storage", should_show_tabs);
     } else if (tab_name === "preview_tab") {
       frm.toggle_display("drag_drop_html", should_show_tabs);
-      frm.toggle_display("layout", should_show_tabs);
       frm.toggle_display("preview", should_show_tabs);
     }
   });
