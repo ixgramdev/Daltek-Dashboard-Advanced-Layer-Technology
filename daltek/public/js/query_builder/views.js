@@ -13,6 +13,8 @@
   let currentView = "list";
   let currentQuery = null;
   let savedQueries = [];
+  let autoSaveTimer = null;
+  const AUTO_SAVE_DELAY = 2000; // 2 segundos de debounce
 
   function getCurrentDocName() {
     if (window.cur_frm && window.cur_frm.doc) {
@@ -348,8 +350,8 @@
     const docName = getCurrentDocName();
 
     if (!docName) {
-      frappe.msgprint("Debes guardar el documento Daltek primero");
-      return;
+      frappe.msgprint("Debes guardar el documento Daltek primero"); // Esto debe ser cambiado que si no se a creado el dashboard ejecutar una validacion
+      return; // En caso de estar ok los campos guardar y usar docName nuevo (if false) frappe.throw
     }
 
     const queryData = {
@@ -383,6 +385,9 @@
 
           renderQueriesList();
           hideSaveModal();
+
+          // Volver automáticamente a la vista de lista de consultas
+          window.QueryBuilderViews.showListView();
         } else {
           frappe.msgprint(
             response.message?.error || "Error guardando la consulta",
@@ -409,7 +414,7 @@
     }
 
     frappe.call({
-      method: "daltek.daltek.doctype.daltek.daltek.get_saved_queries",
+      method: "daltek.daltek.doctype.daltek.daltek.get_all_queries",
       args: {
         doc_name: docName,
       },
@@ -493,6 +498,83 @@
     });
   }
 
+  // --- AUTO-GUARDADO ---  Analizar esta sección cuidadosamente
+
+  function triggerAutoSave() {
+    // Limpiar timer anterior si existe
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+    }
+
+    // Programar nuevo auto-guardado con debounce
+    autoSaveTimer = setTimeout(() => {
+      performAutoSave();
+    }, AUTO_SAVE_DELAY);
+  }
+
+  function performAutoSave() {
+    const state = window.QueryBuilderState?.state;
+    const docName = getCurrentDocName();
+
+    // Validaciones básicas
+    if (!docName || docName.startsWith("new-")) {
+      return; // No auto-guardar en documentos no guardados
+    }
+
+    if (!state || (!state.table && !state.doctypeName)) {
+      return; // No hay tabla seleccionada
+    }
+
+    if (!state.selectedCols || state.selectedCols.length === 0) {
+      return; // No hay columnas seleccionadas
+    }
+
+    // Preparar datos del query
+    const queryData = {
+      id: currentQuery?.id || null,
+      name: currentQuery?.name || `Query ${new Date().toLocaleTimeString()}`,
+      doctype: state.doctypeName || "",
+      columns: state.selectedCols || [],
+      filters: state.filters || [],
+      description:
+        currentQuery?.description || `Auto-guardado: ${state.doctypeName}`,
+      created_by: frappe.session.user,
+      created_at: currentQuery?.created_at || new Date().toISOString(),
+    };
+
+    // Llamar al método de auto-guardado sin commit
+    frappe.call({
+      method: "daltek.daltek.doctype.daltek.daltek.save_query",
+      args: {
+        doc_name: docName,
+        query_data: JSON.stringify(queryData),
+      },
+      async: true, // Asíncrono para no bloquear UI
+      callback: function (response) {
+        if (response.message && response.message.success) {
+          // Actualizar currentQuery con el resultado
+          currentQuery = response.message.saved_query;
+
+          // Mostrar indicador sutil de guardado
+          const saveIndicator = document.getElementById("autoSaveIndicator");
+          if (saveIndicator) {
+            saveIndicator.textContent = "✓ Guardado";
+            saveIndicator.style.color = "green";
+
+            setTimeout(() => {
+              saveIndicator.textContent = "";
+            }, 2000);
+          }
+        }
+      },
+      error: function (error) {
+        console.error("Error en auto-guardado:", error);
+      },
+    });
+  }
+
+  // Exponer función para que otros módulos puedan triggerar auto-save
+  window.QueryBuilderViews.triggerAutoSave = triggerAutoSave;
   window.QueryBuilderViews.getSavedQueries = () => savedQueries;
   window.QueryBuilderViews.getCurrentQuery = () => currentQuery;
   window.QueryBuilderViews.resetBuilder = resetBuilder;

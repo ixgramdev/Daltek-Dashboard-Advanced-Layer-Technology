@@ -6,6 +6,8 @@ import os
 import frappe
 from frappe.model.document import Document
 
+from ...domain.query_service.query_service import QueryService
+
 
 class Daltek(Document):
     def before_save(self):
@@ -16,85 +18,22 @@ class Daltek(Document):
 
         self.last_modified = current_datetime
 
+    def validate(self):
+        # Validar que los datos sean fechas y el usuario exista dentro del sistema
+        pass
 
-@frappe.whitelist()
-def execute_query_builder_sql(sql_query, limit=100):
-    try:
-        # Validaciones de seguridad
-        if not sql_query or not sql_query.strip():
-            frappe.throw("La consulta SQL no puede estar vacía")
+    @frappe.whitelist()
+    def get_name(self):
+        return self.name
 
-        # Limpiar y normalizar la consulta
-        sql_query = sql_query.strip()
-        if sql_query.endswith(";"):
-            sql_query = sql_query[:-1]
 
-        # Validar que sea solo una consulta SELECT
-        sql_upper = sql_query.upper().strip()
-        if not sql_upper.startswith("SELECT"):
-            frappe.throw("Solo se permiten consultas SELECT")
-
-        # Evitar consultas peligrosas
-        dangerous_keywords = [
-            "DELETE",
-            "INSERT",
-            "UPDATE",
-            "DROP",
-            "CREATE",
-            "ALTER",
-            "TRUNCATE",
-        ]
-        for keyword in dangerous_keywords:
-            if keyword in sql_upper:
-                frappe.throw(f"Palabra clave no permitida: {keyword}")
-
-        # Agregar límite si no existe
-        if "LIMIT" not in sql_upper:
-            sql_query += f" LIMIT {limit}"
-
-        # Ejecutar la consulta
-        frappe.log_error(f"Ejecutando consulta: {sql_query}", "QueryBuilder SQL")
-
-        results = frappe.db.sql(sql_query, as_dict=True)
-
-        return {
-            "success": True,
-            "data": results,
-            "count": len(results),
-            "sql": sql_query,
-            "message": f"Consulta ejecutada exitosamente. {len(results)} filas retornadas.",
-        }
-
-    except frappe.ValidationError as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "sql": sql_query,
-            "message": "Error de validación en la consulta",
-        }
-    except Exception as e:
-        frappe.log_error(
-            f"Error ejecutando consulta SQL: {str(e)}", "QueryBuilder Error"
-        )
-        return {
-            "success": False,
-            "error": str(e),
-            "sql": sql_query,
-            "message": "Error ejecutando la consulta SQL",
-        }
+# --- MÉTODOS DEL DOCTYPE ---
+# Los métodos CRUD de queries se encuentran en QueryService
+# Solo mantener aquí métodos relacionados con el UI del DocType
 
 
 @frappe.whitelist()
 def get_doctype_fields(doctype_name):
-    """
-    Obtiene los campos de un DocType específico para el Query Builder.
-
-    Args:
-        doctype_name (str): Nombre del DocType
-
-    Returns:
-        dict: Diccionario con los campos del DocType
-    """
     try:
         if not doctype_name:
             frappe.throw("El nombre del DocType es requerido")
@@ -106,11 +45,9 @@ def get_doctype_fields(doctype_name):
         # Obtener metadatos del DocType
         meta = frappe.get_meta(doctype_name)
 
-        # Verificar si es un DocType custom
         doctype_doc = frappe.get_doc("DocType", doctype_name)
         is_custom = getattr(doctype_doc, "custom", 0) == 1
 
-        # Campos estándar que siempre están disponibles
         standard_fields = [
             {"fieldname": "name", "label": "ID", "fieldtype": "Data"},
             {
@@ -131,14 +68,29 @@ def get_doctype_fields(doctype_name):
             {"fieldname": "owner", "label": "Propietario", "fieldtype": "Data"},
         ]
 
-        # Campos personalizados del DocType
         custom_fields = []
         for field in meta.fields:
-            if field.fieldname and field.fieldtype not in [
-                "Section Break",
-                "Column Break",
-                "Tab Break",
-            ]:
+            if (
+                field.fieldname
+                and not field.hidden
+                and field.fieldtype
+                in [
+                    "Data",
+                    "Select",
+                    "Link",
+                    "Int",
+                    "Float",
+                    "Currency",
+                    "Date",
+                    "Datetime",
+                    "Check",
+                    "Text",
+                    "Small Text",
+                    "Long Text",
+                    "MultiSelect",
+                    "Child Table",
+                ]
+            ):
                 custom_fields.append(
                     {
                         "fieldname": field.fieldname,
@@ -309,172 +261,196 @@ def get_drag_drop_html():
         return f"<div style='{error_style}'>{error_msg}</div>"
 
 
+# --- MÉTODOS PARA QUERY SERVICE ---
+# Métodos wrapper que conectan el cliente con QueryService
+
+
 @frappe.whitelist()
 def save_query(doc_name, query_data):
+    """
+    Guarda una nueva consulta o actualiza una existente en el campo JSON.
+
+    Args:
+        doc_name: Nombre del documento Daltek
+        query_data: JSON string o dict con los datos de la consulta
+
+    Returns:
+        Dict con success, message, queries y saved_query
+    """
     try:
+        service = QueryService()
+
+        # Parsear query_data si viene como string
         if isinstance(query_data, str):
-            query_data = frappe.parse_json(query_data)
+            import json
 
-        if not doc_name or doc_name.startswith("new-"):
-            return {
-                "success": False,
-                "message": "Debes guardar el documento Daltek primero",
-            }
-
-        if not frappe.db.exists("Daltek", doc_name):
-            return {
-                "success": False,
-                "message": f"El documento Daltek '{doc_name}' no existe",
-            }
-
-        doc = frappe.get_doc("Daltek", doc_name)
-        existing_queries = (
-            frappe.parse_json(doc.query_data_storage) if doc.query_data_storage else []
-        )
-
-        query = {
-            "id": query_data.get("id") or frappe.generate_hash(length=8),
-            "name": query_data.get("name"),
-            "doctype": query_data.get("doctype"),
-            "columns": query_data.get("columns", []),
-            "filters": query_data.get("filters", []),
-            "description": query_data.get("description", ""),
-            "created_by": query_data.get("created_by") or frappe.session.user,
-            "created_at": query_data.get("created_at") or frappe.utils.now(),
-        }
-
-        query_index = -1
-        if "id" in query_data:
-            for i, existing_query in enumerate(existing_queries):
-                if existing_query.get("id") == query_data["id"]:
-                    query_index = i
-                    break
-
-        if query_index >= 0:
-            existing_queries[query_index] = query
-            message = f"Consulta '{query['name']}' actualizada exitosamente"
+            query_dict = json.loads(query_data)
         else:
-            existing_queries.append(query)
-            message = f"Consulta '{query['name']}' guardada exitosamente"
+            query_dict = query_data
 
-        doc.query_data_storage = frappe.as_json(existing_queries)
-        doc.save()
+        # Si la query tiene ID, es una edición
+        if query_dict.get("id"):
+            result = service.edit(doc_name, query_dict["id"], query_dict)
+        else:
+            result = service.save(doc_name, query_dict)
 
-        return {
-            "success": True,
-            "message": message,
-            "query": query,
-            "total_queries": len(existing_queries),
-        }
+        return result
 
     except Exception as e:
-        frappe.log_error(f"Error guardando consulta: {str(e)}", "Query Save Error")
-        return {"success": False, "message": f"Error al guardar la consulta: {str(e)}"}
+        frappe.log_error(f"Error en save_query: {str(e)}", "QueryService Wrapper Error")
+        return {"success": False, "error": str(e)}
 
 
 @frappe.whitelist()
-def get_saved_queries(doc_name):
+def edit_query(doc_name, query_id, query_data):
     """
-    Obtiene todas las consultas guardadas del documento.
+    Edita una consulta existente.
 
     Args:
-        doc_name (str): Nombre del documento Daltek
+        doc_name: Nombre del documento Daltek
+        query_id: ID de la consulta a editar
+        query_data: JSON string o dict con los nuevos datos
 
     Returns:
-        dict: Lista de consultas guardadas
+        Dict con success, message, queries y saved_query
     """
     try:
-        if not doc_name or doc_name.startswith("new-"):
-            return {
-                "success": True,
-                "queries": [],
-                "message": "Documento no guardado, sin consultas disponibles",
-            }
-
-        if not frappe.db.exists("Daltek", doc_name):
-            return {
-                "success": False,
-                "message": f"El documento Daltek '{doc_name}' no existe",
-            }
-
-        # Obtener el documento
-        doc = frappe.get_doc("Daltek", doc_name)
-
-        # Obtener consultas
-        queries = (
-            frappe.parse_json(doc.query_data_storage) if doc.query_data_storage else []
-        )
-
-        return {"success": True, "queries": queries, "total": len(queries)}
+        service = QueryService()
+        result = service.edit(doc_name, query_id, query_data)
+        return result
 
     except Exception as e:
-        frappe.log_error(f"Error obteniendo consultas: {str(e)}", "Query Get Error")
-        return {
-            "success": False,
-            "message": f"Error al obtener las consultas: {str(e)}",
-        }
+        frappe.log_error(f"Error en edit_query: {str(e)}", "QueryService Wrapper Error")
+        return {"success": False, "error": str(e)}
 
 
 @frappe.whitelist()
 def delete_query(doc_name, query_id):
     """
-    Elimina una consulta específica.
+    Elimina una consulta del documento.
 
     Args:
-        doc_name (str): Nombre del documento Daltek
-        query_id (str): ID de la consulta a eliminar
+        doc_name: Nombre del documento Daltek
+        query_id: ID de la consulta a eliminar
 
     Returns:
-        dict: Resultado de la operación
+        Dict con success, message y queries actualizadas
     """
     try:
-        if not doc_name or doc_name.startswith("new-"):
-            return {
-                "success": False,
-                "message": "Debes guardar el documento Daltek primero",
-            }
-
-        if not frappe.db.exists("Daltek", doc_name):
-            return {
-                "success": False,
-                "message": f"El documento Daltek '{doc_name}' no existe",
-            }
-
-        # Obtener el documento
-        doc = frappe.get_doc("Daltek", doc_name)
-
-        # Obtener consultas existentes
-        existing_queries = (
-            frappe.parse_json(doc.query_data_storage) if doc.query_data_storage else []
-        )
-
-        # Buscar y eliminar la consulta
-        query_to_delete = None
-        updated_queries = []
-
-        for query in existing_queries:
-            if query.get("id") == query_id:
-                query_to_delete = query
-            else:
-                updated_queries.append(query)
-
-        if not query_to_delete:
-            return {
-                "success": False,
-                "message": f"No se encontró la consulta con ID: {query_id}",
-            }
-
-        # Guardar la lista actualizada
-        doc.query_data_storage = frappe.as_json(updated_queries)
-        doc.save()
-
-        return {
-            "success": True,
-            "message": f"Consulta '{query_to_delete.get('name', query_id)}' eliminada exitosamente",
-            "deleted_query": query_to_delete,
-            "remaining_queries": len(updated_queries),
-        }
+        service = QueryService()
+        result = service.delete(doc_name, query_id)
+        return result
 
     except Exception as e:
-        frappe.log_error(f"Error eliminando consulta: {str(e)}", "Query Delete Error")
-        return {"success": False, "message": f"Error al eliminar la consulta: {str(e)}"}
+        frappe.log_error(
+            f"Error en delete_query: {str(e)}", "QueryService Wrapper Error"
+        )
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def get_query(doc_name, query_id):
+    """
+    Obtiene una consulta específica.
+
+    Args:
+        doc_name: Nombre del documento Daltek
+        query_id: ID de la consulta
+
+    Returns:
+        Dict con success y query
+    """
+    try:
+        service = QueryService()
+        result = service.get(doc_name, query_id)
+        return result
+
+    except Exception as e:
+        frappe.log_error(f"Error en get_query: {str(e)}", "QueryService Wrapper Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def get_all_queries(doc_name):
+    """
+    Obtiene todas las consultas guardadas en el documento.
+
+    Args:
+        doc_name: Nombre del documento Daltek
+
+    Returns:
+        Dict con success, queries y count
+    """
+    try:
+        service = QueryService()
+        result = service.get_all(doc_name)
+        return result
+
+    except Exception as e:
+        frappe.log_error(
+            f"Error en get_all_queries: {str(e)}", "QueryService Wrapper Error"
+        )
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def execute_query(doc_name, query_id):
+    """
+    Ejecuta una consulta guardada.
+
+    Args:
+        doc_name: Nombre del documento Daltek
+        query_id: ID de la consulta a ejecutar
+
+    Returns:
+        Dict con success, results, sql y metadata
+    """
+    try:
+        service = QueryService()
+        result = service.execute(doc_name, query_id)
+        return result
+
+    except Exception as e:
+        frappe.log_error(
+            f"Error en execute_query: {str(e)}", "QueryService Wrapper Error"
+        )
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def update_query_field(doc_name, query_id, field_name, field_value):
+    """
+    Actualiza un campo específico de una consulta sin afectar el resto.
+    Útil para auto-guardado incremental.
+
+    Args:
+        doc_name: Nombre del documento Daltek
+        query_id: ID de la consulta
+        field_name: Nombre del campo a actualizar (ej: 'name', 'filters', 'columns')
+        field_value: Nuevo valor del campo
+
+    Returns:
+        Dict con success y query actualizada
+    """
+    try:
+        service = QueryService()
+
+        # Obtener la query actual
+        get_result = service.get(doc_name, query_id)
+        if not get_result.get("success"):
+            return get_result
+
+        query = get_result.get("query")
+
+        # Actualizar el campo específico
+        query[field_name] = field_value
+
+        # Guardar la query actualizada
+        result = service.edit(doc_name, query_id, query)
+        return result
+
+    except Exception as e:
+        frappe.log_error(
+            f"Error en update_query_field: {str(e)}", "QueryService Wrapper Error"
+        )
+        return {"success": False, "error": str(e)}
