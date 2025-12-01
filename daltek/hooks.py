@@ -25,8 +25,16 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = ["/assets/daltek/css/gridstack.min.css"]
-app_include_js = ["/assets/daltek/js/gridstack-all.js"]
+app_include_css = [
+    "/assets/daltek/css/gridstack.min.css",
+    "/assets/daltek/css/echarts-widgets.css",
+]
+app_include_js = [
+    # GridStack library for drag and drop
+    "/assets/daltek/js/libs/gridstack-all.js",
+    # ECharts library for chart rendering
+    "/assets/daltek/js/libs/echarts.min.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/daltek/css/daltek.css"

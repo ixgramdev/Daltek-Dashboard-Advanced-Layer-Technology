@@ -1,0 +1,159 @@
+/* ==================== ECHART WIDGETS ==================== */
+
+/* Contenedor del widget EChart */
+.echart-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Header del widget */
+.echart-widget .dd-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(to right, #f8f9fa, #ffffff);
+}
+
+.echart-widget .dd-widget-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.echart-widget .dd-widget-config-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.echart-widget .dd-widget-config-btn:hover {
+  background: #f0f0f0;
+  color: #2196f3;
+}
+
+/* Body del widget (contenedor del chart) */
+.echart-widget .dd-widget-body {
+  flex: 1;
+  min-height: 200px;
+  position: relative;
+  padding: 8px;
+}
+
+/* Contenedor del EChart */
+.echart-container {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  min-height: 180px;
+}
+
+/* Preview en sidebar */
+.dd-widget-preview.echart-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: grab;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dd-widget-preview.echart-preview:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dd-widget-preview.echart-preview:active {
+  cursor: grabbing;
+}
+
+.dd-widget-preview.echart-preview i {
+  font-size: 24px;
+}
+
+/* Estilos para diferentes tipos de preview */
+.dd-widget-preview[data-chart-type="line"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.dd-widget-preview[data-chart-type="bar"] {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.dd-widget-preview[data-chart-type="pie"] {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.dd-widget-preview[data-chart-type="scatter"] {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* Loading state */
+.echart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+}
+
+.echart-loading i {
+  font-size: 32px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .echart-widget .dd-widget-header {
+    padding: 8px 12px;
+  }
+
+  .echart-widget .dd-widget-title {
+    font-size: 12px;
+  }
+
+  .echart-container {
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+  }
+}
+
+/* Card widget tradicional */
+.dd-widget-card:not(.echart-widget) {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}

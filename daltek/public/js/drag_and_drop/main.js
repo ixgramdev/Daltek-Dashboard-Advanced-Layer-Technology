@@ -28,13 +28,17 @@
 
   // Función de inicialización principal
   window.initDragDropSystem = function (frm, availableWidgets) {
-    console.log("Inicializando sistema Drag and Drop...", {
+    console.log("🚀 Inicializando sistema Drag and Drop...", {
       frm: frm,
+      docName: frm.doc.name,
       availableWidgets: availableWidgets,
     });
 
     // Guardar referencia al formulario
     State.setFrm(frm);
+
+    // Guardar nombre del documento
+    State.state.docName = frm.doc.name;
 
     // Guardar widgets disponibles
     State.setAvailableWidgets(availableWidgets);
@@ -48,23 +52,52 @@
       wrapper.classList.add("dark");
     }
 
-    // Inicializar GridStack
-    const grid = Grid.initialize();
+    // Cargar layout existente desde el backend
+    frappe.call({
+      method: "daltek.daltek.doctype.daltek.daltek.get_layout",
+      args: { doc_name: frm.doc.name },
+      callback: function (response) {
+        if (response.message && response.message.success) {
+          const layout = response.message.layout || [];
 
-    if (!grid) {
-      console.error("No se pudo inicializar GridStack");
-      return;
-    }
+          console.log(`📂 Layout cargado: ${layout.length} widgets`);
 
-    console.log("GridStack inicializado:", grid);
+          // Inicializar GridStack
+          const grid = Grid.initialize();
 
-    // Renderizar widgets disponibles en el sidebar
-    Widgets.renderAvailableWidgets();
+          if (!grid) {
+            console.error("❌ No se pudo inicializar GridStack");
+            return;
+          }
 
-    // Renderizar widgets existentes en el canvas
-    Grid.renderExistingWidgets();
+          console.log("✅ GridStack inicializado");
 
-    console.log("Sistema Drag and Drop inicializado correctamente");
+          // Renderizar widgets existentes
+          layout.forEach((widget) => {
+            if (widget.type === "echart") {
+              // Renderizar EChart
+              Widgets.renderEChartWidget(widget);
+            } else {
+              // Renderizar widget tradicional
+              Grid.renderWidget(widget);
+            }
+
+            // Añadir al estado
+            State.addWidget(widget);
+          });
+
+          // Renderizar sidebar
+          Widgets.renderAvailableWidgets();
+
+          console.log("✅ Sistema Drag and Drop inicializado correctamente");
+        } else {
+          console.error("❌ Error cargando layout:", response.message?.error);
+        }
+      },
+      error: function (err) {
+        console.error("❌ Error de conexión al cargar layout:", err);
+      },
+    });
   };
 
   // Exportar función de inicialización

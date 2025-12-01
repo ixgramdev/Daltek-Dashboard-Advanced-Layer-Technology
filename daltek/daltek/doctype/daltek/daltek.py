@@ -7,6 +7,7 @@ import frappe
 from frappe.model.document import Document
 
 from ...domain.query_service.query_service import QueryService
+from ...domain.widget_service.widget_service import WidgetService
 
 
 class Daltek(Document):
@@ -350,16 +351,6 @@ def delete_query(doc_name, query_id):
 
 @frappe.whitelist()
 def get_query(doc_name, query_id):
-    """
-    Obtiene una consulta específica.
-
-    Args:
-        doc_name: Nombre del documento Daltek
-        query_id: ID de la consulta
-
-    Returns:
-        Dict con success y query
-    """
     try:
         service = QueryService()
         result = service.get(doc_name, query_id)
@@ -372,15 +363,7 @@ def get_query(doc_name, query_id):
 
 @frappe.whitelist()
 def get_all_queries(doc_name):
-    """
-    Obtiene todas las consultas guardadas en el documento.
 
-    Args:
-        doc_name: Nombre del documento Daltek
-
-    Returns:
-        Dict con success, queries y count
-    """
     try:
         service = QueryService()
         result = service.get_all(doc_name)
@@ -395,16 +378,7 @@ def get_all_queries(doc_name):
 
 @frappe.whitelist()
 def execute_query(doc_name, query_id):
-    """
-    Ejecuta una consulta guardada.
-
-    Args:
-        doc_name: Nombre del documento Daltek
-        query_id: ID de la consulta a ejecutar
-
-    Returns:
-        Dict con success, results, sql y metadata
-    """
+    # Ejecuta una consulta
     try:
         service = QueryService()
         result = service.execute(doc_name, query_id)
@@ -419,19 +393,7 @@ def execute_query(doc_name, query_id):
 
 @frappe.whitelist()
 def update_query_field(doc_name, query_id, field_name, field_value):
-    """
-    Actualiza un campo específico de una consulta sin afectar el resto.
-    Útil para auto-guardado incremental.
-
-    Args:
-        doc_name: Nombre del documento Daltek
-        query_id: ID de la consulta
-        field_name: Nombre del campo a actualizar (ej: 'name', 'filters', 'columns')
-        field_value: Nuevo valor del campo
-
-    Returns:
-        Dict con success y query actualizada
-    """
+    # Actualiza un solo campo de una consuta sin afectar al resto
     try:
         service = QueryService()
 
@@ -453,4 +415,107 @@ def update_query_field(doc_name, query_id, field_name, field_value):
         frappe.log_error(
             f"Error en update_query_field: {str(e)}", "QueryService Wrapper Error"
         )
+        return {"success": False, "error": str(e)}
+
+
+# --- Metodos de WidgetService ---
+
+
+@frappe.whitelist()
+def render_layout(doc_name):
+    try:
+        service = WidgetService()
+        result = service.render_layout(doc_name)
+        return result
+
+    except Exception as e:
+        frappe.log_error(
+            f"Error en render_layout: {str(e)}", "WidgetService Wrapper Error"
+        )
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def get_layout(doc_name):
+    try:
+        service = WidgetService()
+        layout = service.get_layout(doc_name)
+        return {"success": True, "layout": layout}
+
+    except Exception as e:
+        frappe.log_error(
+            f"Error en get_layout: {str(e)}", "WidgetService Wrapper Error"
+        )
+        return {"success": False, "error": str(e)}
+
+
+# ==================== WRAPPERS PARA ECHARTS ====================
+
+
+@frappe.whitelist()
+def add_widget_echart(
+    doc_name, chart_type, chart_data, chart_config=None, widget_properties=None
+):
+    """
+    Wrapper para crear widgets EChart desde el frontend.
+    Llama a WidgetService.add_echart() y retorna resultado.
+
+    Args:
+        doc_name: Nombre del documento Daltek
+        chart_type: Tipo de chart ("line", "bar", "pie", "scatter")
+        chart_data: Datos del chart (dict o JSON string)
+        chart_config: Configuración visual (dict o JSON string)
+        widget_properties: Propiedades del widget (dict o JSON string)
+
+    Returns:
+        Dict con success, widget creado y layout actualizado
+    """
+    try:
+        import json
+
+        # Parsear strings a dicts si es necesario
+        if isinstance(chart_data, str):
+            chart_data = json.loads(chart_data)
+        if isinstance(chart_config, str):
+            chart_config = json.loads(chart_config)
+        if isinstance(widget_properties, str):
+            widget_properties = json.loads(widget_properties)
+
+        # Llamar al servicio
+        service = WidgetService()
+        result = service.add_echart(
+            doc_name=doc_name,
+            chart_type=chart_type,
+            chart_data=chart_data,
+            chart_config=chart_config or {},
+            widget_properties=widget_properties or {},
+        )
+
+        return result
+
+    except Exception as e:
+        frappe.log_error(
+            f"Error en add_widget_echart(): {str(e)}", "EChart Widget Wrapper Error"
+        )
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def add_widget(doc_name, widget):
+    """
+    Wrapper genérico para widgets tradicionales (card, table, etc).
+    Llama a WidgetService.add().
+    """
+    try:
+        import json
+
+        if isinstance(widget, str):
+            widget = json.loads(widget)
+
+        service = WidgetService()
+        result = service.add(doc_name, widget)
+        return result
+
+    except Exception as e:
+        frappe.log_error(f"Error en add_widget(): {str(e)}", "Widget Wrapper Error")
         return {"success": False, "error": str(e)}
