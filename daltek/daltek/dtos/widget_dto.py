@@ -21,7 +21,7 @@ class WidgetDTO:
         type: Tipo de widget (e.g., 'card', 'echart', 'table')
         properties: Propiedades genéricas del widget
         created_at: Fecha de creación (ISO format)
-        modified_at: Fecha de última modificación (ISO format)
+        modified_at: Fecha de última modificación (ISO format)git st
         position: Posición del widget en el dashboard {'x': int, 'y': int}
     """
 
