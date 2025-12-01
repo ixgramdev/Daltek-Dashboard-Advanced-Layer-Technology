@@ -56,11 +56,20 @@
     State.saveWidgets(widgets);
   };
 
-  // Añadir un widget al grid
+  // Añadir un widget al grid (SOLO para widgets tradicionales, NO para ECharts)
   window.DragDropGrid.addWidget = function (widgetData, position) {
     const grid = State.state.grid;
     if (!grid) {
       console.error("Grid no inicializado");
+      return;
+    }
+
+    // ⚠️ NO usar esta función para widgets tipo "echart"
+    // Los ECharts se renderizan con DragDropWidgets.renderEChartWidget()
+    if (widgetData.type === "echart") {
+      console.warn(
+        "⚠️ No usar addWidget() para ECharts, usar renderEChartWidget()",
+      );
       return;
     }
 
@@ -100,8 +109,49 @@
     }
   };
 
-  // Renderizar widgets existentes en el grid
+  // Renderizar widget tradicional (NO EChart) en el grid
+  window.DragDropGrid.renderWidget = function (widget) {
+    const grid = State.state.grid;
+    if (!grid) {
+      console.error("Grid no inicializado");
+      return;
+    }
+
+    // Crear nodo del widget
+    const node = document.createElement("div");
+    node.className = "grid-stack-item";
+    node.dataset.widgetId = widget.id;
+    node.dataset.widgetType = widget.type;
+
+    node.innerHTML = UI.createWidgetHTML(widget);
+
+    // Setear atributos para GridStack
+    node.setAttribute("gs-x", widget.position.col || widget.position.x || 0);
+    node.setAttribute("gs-y", widget.position.row || widget.position.y || 0);
+    node.setAttribute("gs-w", widget.position.width || 2);
+    node.setAttribute("gs-h", widget.position.height || 4);
+
+    grid.addWidget(node, {
+      x: widget.position.col || widget.position.x || 0,
+      y: widget.position.row || widget.position.y || 0,
+      w: widget.position.width || 2,
+      h: widget.position.height || 4,
+    });
+
+    // Añadir event listener al botón de configuración
+    const configBtn = node.querySelector(".dd-widget-config-btn");
+    if (configBtn) {
+      configBtn.addEventListener("click", () => {
+        window.DragDropGrid.handleWidgetConfig(widget.id, node);
+      });
+    }
+  };
+
+  // Renderizar widgets existentes en el grid (DEPRECATED - usar main.js)
   window.DragDropGrid.renderExistingWidgets = function () {
+    console.warn(
+      "⚠️ renderExistingWidgets() está deprecated. Los widgets se cargan desde main.js",
+    );
     const grid = State.state.grid;
     const widgets = State.getWidgets();
 
@@ -110,33 +160,12 @@
     }
 
     widgets.forEach((widget) => {
-      // Usar el id original del widget para que coincida con el layout
-      const node = document.createElement("div");
-      node.className = "grid-stack-item";
-      node.dataset.widgetId = widget.id;
-      node.dataset.widgetType = widget.type;
-
-      node.innerHTML = UI.createWidgetHTML(widget);
-
-      // Setear atributos gs-x, gs-y, gs-w, gs-h para que GridStack los use
-      node.setAttribute("gs-x", widget.position.col || widget.position.x || 0);
-      node.setAttribute("gs-y", widget.position.row || widget.position.y || 0);
-      node.setAttribute("gs-w", widget.position.width || 2);
-      node.setAttribute("gs-h", widget.position.height || 4);
-
-      grid.addWidget(node, {
-        x: widget.position.col || widget.position.x || 0,
-        y: widget.position.row || widget.position.y || 0,
-        w: widget.position.width || 2,
-        h: widget.position.height || 4,
-      });
-
-      // Añadir event listener al botón de configuración
-      const configBtn = node.querySelector(".dd-widget-config-btn");
-      if (configBtn) {
-        configBtn.addEventListener("click", () => {
-          window.DragDropGrid.handleWidgetConfig(widget.id, node);
-        });
+      if (widget.type === "echart") {
+        // Los ECharts se renderizan con su función específica
+        window.DragDropWidgets.renderEChartWidget(widget);
+      } else {
+        // Widgets tradicionales
+        window.DragDropGrid.renderWidget(widget);
       }
     });
   };
