@@ -230,23 +230,23 @@ class QueryService:
 
     @frappe.whitelist()
     def get_all(self, doc_name: str) -> dict[str, Any]:
-        try:
-            if not frappe.db.exists("Daltek", doc_name):
-                return {
-                    "success": False,
-                    "error": f"Documento Daltek '{doc_name}' no existe",
-                }
+        # try:
+        # if not frappe.db.exists("Daltek", doc_name):
+        # return {
+        # "success": False,
+        # "error": f"Documento Daltek '{doc_name}' no existe",
+        # }
 
-            doc = frappe.get_doc("Daltek", doc_name)
-            queries = self._get_queries_list(doc)
+        doc = frappe.get_doc("Daltek", doc_name)
+        queries = self._get_queries_list(doc)
 
-            return {"success": True, "queries": queries, "count": len(queries)}
+        return {"success": True, "queries": queries, "count": len(queries)}
 
-        except Exception as e:
-            frappe.log_error(f"Error en get_all(): {str(e)}", "QueryService Error")
-            return {"success": False, "error": str(e)}
+    # except Exception as e:
+    # frappe.log_error(f"Error en get_all(): {str(e)}", "QueryService Error")
+    # return {"success": False, "error": str(e)}
 
-    # --- MÉTODOS PRIVADOS HELPERS ---
+    # MÉTODOS PRIVADOS HELPERS
 
     def get_doc(doc_name):
         return frappe.get.doc("Daltek", doc_name)
