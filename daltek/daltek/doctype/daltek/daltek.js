@@ -2,24 +2,10 @@ frappe.ui.form.on("Daltek", {
   onload(frm) {
     if (!frm.drag_drop_initialized) {
       frm.drag_drop_initialized = true;
-
-      // Cargar widgets y scripts del drag and drop
-      frappe.require(
-        [
-          "/assets/daltek/js/widgets.js",
-          "/assets/daltek/js/drag_and_drop/state.js",
-          "/assets/daltek/js/drag_and_drop/ui.js",
-          "/assets/daltek/js/drag_and_drop/grid.js",
-          "/assets/daltek/js/drag_and_drop/widgets.js",
-          "/assets/daltek/js/drag_and_drop/main.js",
-        ],
-        function () {
-          console.log("✅ Todos los scripts cargados correctamente");
-          console.log("Widgets disponibles:", availableWidgets);
-          console.log("Sistema Drag and Drop listo:", window.DragDropSystem);
-          load_drag_drop_system(frm);
-        },
-      );
+      frappe.require("/assets/daltek/js/widgets.js", function () {
+        console.log("Widgets cargados:", availableWidgets);
+        load_drag_drop_system(frm);
+      });
     }
   },
 
@@ -93,42 +79,18 @@ function load_drag_drop_system(frm) {
         frm.fields_dict.drag_drop_html.$wrapper.html(r.message);
 
         setTimeout(function () {
-          // Debug: verificar estado de los módulos
-          console.log("🔍 Estado de módulos Drag and Drop:");
-          console.log(
-            "   - window.DragDropSystem:",
-            typeof window.DragDropSystem,
-          );
-          console.log(
-            "   - window.initDragDropSystem:",
-            typeof window.initDragDropSystem,
-          );
-          console.log(
-            "   - window.availableWidgets:",
-            typeof window.availableWidgets,
-          );
-          console.log(
-            "   - availableWidgets (global):",
-            typeof availableWidgets,
-          );
-
           if (
             typeof window.initDragDropSystem === "function" &&
-            (typeof window.availableWidgets !== "undefined" ||
-              typeof availableWidgets !== "undefined")
+            typeof availableWidgets !== "undefined"
           ) {
-            const widgets = window.availableWidgets || availableWidgets || [];
             console.log(
-              "✅ Inicializando sistema Drag and Drop con widgets:",
-              widgets,
+              "Inicializando sistema Drag and Drop con widgets:",
+              availableWidgets,
             );
-            window.initDragDropSystem(frm, widgets);
+            window.initDragDropSystem(frm, availableWidgets);
           } else {
             console.error(
-              "❌ Sistema Drag and Drop no disponible o widgets no cargados",
-            );
-            console.error(
-              "   Verificar que los scripts fueron cargados correctamente",
+              "Sistema Drag and Drop no disponible o widgets no cargados",
             );
           }
         }, 100);
@@ -137,9 +99,7 @@ function load_drag_drop_system(frm) {
     error: function (err) {
       console.error("Error cargando Drag and Drop:", err);
       frm.fields_dict.drag_drop_html.$wrapper.html(
-        "<div style='padding: 20px; color: red;'>Error al cargar Drag and Drop: " +
-          err +
-          "</div>",
+        "<div style='padding: 20px; color: red;'>Error al cargar Drag and Drop</div>",
       );
     },
   });
