@@ -126,10 +126,7 @@ def get_doctype_fields(doctype_name):
 
 @frappe.whitelist()
 def get_query_builder_html():
-    """
-    Retorna el HTML completo del Query Builder para renderizar en un campo HTML.
-    Combina el HTML base con todos los archivos JS necesarios de forma modular.
-    """
+    # Retorna el HTML completo del Query Builder
     try:
         app_path = frappe.get_app_path("daltek")
         query_builder_path = os.path.join(app_path, "public", "js", "query_builder")
@@ -196,10 +193,7 @@ def get_query_builder_html():
 
 @frappe.whitelist()
 def get_drag_drop_html():
-    """
-    Retorna el HTML completo del sistema Drag and Drop para renderizar en un campo HTML.
-    Combina el HTML base con todos los archivos JS necesarios de forma modular.
-    """
+    # Retorna el HTML completo del sistema Drag and Drop
     try:
         app_path = frappe.get_app_path("daltek")
         drag_drop_path = os.path.join(app_path, "public", "js", "drag_and_drop")
@@ -268,16 +262,7 @@ def get_drag_drop_html():
 
 @frappe.whitelist()
 def save_query(doc_name, query_data):
-    """
-    Guarda una nueva consulta o actualiza una existente en el campo JSON.
-
-    Args:
-        doc_name: Nombre del documento Daltek
-        query_data: JSON string o dict con los datos de la consulta
-
-    Returns:
-        Dict con success, message, queries y saved_query
-    """
+    # Guarda una nueva consulta o actualiza una existente
     try:
         service = QueryService()
 
@@ -304,17 +289,7 @@ def save_query(doc_name, query_data):
 
 @frappe.whitelist()
 def edit_query(doc_name, query_id, query_data):
-    """
-    Edita una consulta existente.
-
-    Args:
-        doc_name: Nombre del documento Daltek
-        query_id: ID de la consulta a editar
-        query_data: JSON string o dict con los nuevos datos
-
-    Returns:
-        Dict con success, message, queries y saved_query
-    """
+    # Edita una consulta existente
     try:
         service = QueryService()
         result = service.edit(doc_name, query_id, query_data)
@@ -327,16 +302,7 @@ def edit_query(doc_name, query_id, query_data):
 
 @frappe.whitelist()
 def delete_query(doc_name, query_id):
-    """
-    Elimina una consulta del documento.
-
-    Args:
-        doc_name: Nombre del documento Daltek
-        query_id: ID de la consulta a eliminar
-
-    Returns:
-        Dict con success, message y queries actualizadas
-    """
+    # Elimina una consulta del documento
     try:
         service = QueryService()
         result = service.delete(doc_name, query_id)
@@ -456,20 +422,7 @@ def get_layout(doc_name):
 def add_widget_echart(
     doc_name, chart_type, chart_data, chart_config=None, widget_properties=None
 ):
-    """
-    Wrapper para crear widgets EChart desde el frontend.
-    Llama a WidgetService.add_echart() y retorna resultado.
-
-    Args:
-        doc_name: Nombre del documento Daltek
-        chart_type: Tipo de chart ("line", "bar", "pie", "scatter")
-        chart_data: Datos del chart (dict o JSON string)
-        chart_config: Configuración visual (dict o JSON string)
-        widget_properties: Propiedades del widget (dict o JSON string)
-
-    Returns:
-        Dict con success, widget creado y layout actualizado
-    """
+    # Crea widget EChart
     try:
         import json
 
@@ -502,10 +455,7 @@ def add_widget_echart(
 
 @frappe.whitelist()
 def add_widget(doc_name, widget):
-    """
-    Wrapper genérico para widgets tradicionales (card, table, etc).
-    Llama a WidgetService.add().
-    """
+    # Añade widget genérico (card, table, etc)
     try:
         import json
 
@@ -518,4 +468,338 @@ def add_widget(doc_name, widget):
 
     except Exception as e:
         frappe.log_error(f"Error en add_widget(): {str(e)}", "Widget Wrapper Error")
+        return {"success": False, "error": str(e)}
+
+
+# --- DATA MAPPER ENDPOINTS ---
+# Endpoints para el sistema de transformación de datos
+
+
+@frappe.whitelist()
+def get_mapper_preview(query_name, mapper_config):
+    # Retorna preview de datos transformados
+    try:
+        import json
+        from ...domain.data_mapper.data_mapper_service import DataMapperService
+        from ...domain.query_service.query_service import QueryService
+        
+        # Parse config si viene como string
+        if isinstance(mapper_config, str):
+            mapper_config = json.loads(mapper_config)
+        
+        # Ejecutar query
+        query_service = QueryService()
+        
+        # Si query_name es el nombre guardado
+        if isinstance(query_name, str) and not query_name.startswith("{"):
+            # Buscar la query por nombre en algún documento
+            # Por ahora ejecutamos directamente
+            frappe.throw("Debe proporcionar query_id o doc_name con query_id")
+        else:
+            # Si viene query_id directo, necesitamos doc_name también
+            frappe.throw("Parámetros insuficientes. Use get_mapper_preview_by_id")
+        
+    except Exception as e:
+        frappe.log_error(f"Error en get_mapper_preview: {str(e)}", "DataMapper Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def get_mapper_preview_by_id(doc_name, query_id, mapper_config):
+    # Retorna preview de datos transformados desde query guardada
+    try:
+        import json
+        from ...domain.data_mapper.data_mapper_service import DataMapperService
+        from ...domain.query_service.query_service import QueryService
+        
+        # Parse config si viene como string
+        if isinstance(mapper_config, str):
+            mapper_config = json.loads(mapper_config)
+        
+        # Ejecutar query
+        query_service = QueryService()
+        query_result = query_service.execute(doc_name, query_id)
+        
+        if not query_result.get("success"):
+            return query_result
+        
+        # Aplicar transformación
+        mapper_service = DataMapperService()
+        transformed = mapper_service.preview_transformation(
+            query_result,
+            mapper_config,
+            limit=100  # Límite para preview
+        )
+        
+        return transformed
+        
+    except Exception as e:
+        frappe.log_error(f"Error en get_mapper_preview_by_id: {str(e)}", "DataMapper Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def validate_mapper_config(mapper_config, query_columns):
+    # Valida configuración de mapeo contra columnas disponibles
+    try:
+        import json
+        from ...domain.data_mapper.data_mapper_service import DataMapperService
+        
+        # Parse inputs
+        if isinstance(mapper_config, str):
+            mapper_config = json.loads(mapper_config)
+        
+        if isinstance(query_columns, str):
+            query_columns = json.loads(query_columns)
+        
+        # Validar
+        mapper_service = DataMapperService()
+        validation = mapper_service.validate_mapping(mapper_config, query_columns)
+        
+        return validation
+        
+    except Exception as e:
+        frappe.log_error(f"Error en validate_mapper_config: {str(e)}", "DataMapper Error")
+        return {"is_valid": False, "errors": [str(e)], "warnings": []}
+
+
+@frappe.whitelist()
+def get_available_operations(column_type):
+    # Retorna operaciones disponibles para un tipo de columna
+    try:
+        from ...domain.data_mapper.data_mapper_service import DataMapperService
+        
+        mapper_service = DataMapperService()
+        operations = mapper_service.get_available_operations(column_type)
+        
+        return operations
+        
+    except Exception as e:
+        frappe.log_error(f"Error en get_available_operations: {str(e)}", "DataMapper Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def get_column_metadata(doc_name, query_id):
+    # Obtiene metadata de columnas de una query ejecutada
+    try:
+        from ...domain.data_mapper.data_mapper_service import DataMapperService
+        from ...domain.query_service.query_service import QueryService
+        
+        # Ejecutar query
+        query_service = QueryService()
+        query_result = query_service.execute(doc_name, query_id)
+        
+        if not query_result.get("success"):
+            return query_result
+        
+        # Obtener metadata
+        mapper_service = DataMapperService()
+        data = query_result.get("results", [])
+        columns = mapper_service.get_column_metadata(data)
+        
+        return {"success": True, "columns": columns}
+        
+    except Exception as e:
+        frappe.log_error(f"Error en get_column_metadata: {str(e)}", "DataMapper Error")
+        return {"success": False, "error": str(e)}
+
+
+# ============================================
+# WIDGET SERVICE LAYER - DATA SERVICE ENDPOINTS
+# ============================================
+
+@frappe.whitelist()
+def fetch_query_data(doc_name, query_id):
+    # Ejecuta query y retorna datos con metadata
+    try:
+        from ...domain.widget_service.data_service import DataService
+        
+        service = DataService()
+        result = service.fetch_query_data(doc_name, query_id)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en fetch_query_data: {str(e)}", "DataService Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def apply_transformations(data, config):
+    # Aplica transformaciones del Data Mapper
+    try:
+        import json
+        from ...domain.widget_service.data_service import DataService
+        
+        # Parsear JSON si viene como string
+        if isinstance(data, str):
+            data = json.loads(data)
+        if isinstance(config, str):
+            config = json.loads(config)
+        
+        service = DataService()
+        result = service.apply_transformations(data, config)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en apply_transformations: {str(e)}", "DataService Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def save_widget_config(doc_name, widget_config):
+    # Guarda configuración de widget en layout
+    try:
+        import json
+        from ...domain.widget_service.data_service import DataService
+        
+        # Parsear JSON si viene como string
+        if isinstance(widget_config, str):
+            widget_config = json.loads(widget_config)
+        
+        service = DataService()
+        result = service.save_widget_config(doc_name, widget_config)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en save_widget_config: {str(e)}", "DataService Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def upload_data_service(doc_name, data, source="manual"):
+    # Sube datos desde frontend (CSV/Excel/JSON)
+    try:
+        import json
+        from ...domain.widget_service.data_service import DataService
+        
+        # Parsear JSON si viene como string
+        if isinstance(data, str):
+            data = json.loads(data)
+        
+        service = DataService()
+        result = service.upload_data(doc_name, data, source)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en upload_data_service: {str(e)}", "DataService Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def filter_data(data, filters):
+    # Aplica filtros a los datos
+    try:
+        import json
+        from ...domain.widget_service.data_service import DataService
+        
+        # Parsear JSON si viene como string
+        if isinstance(data, str):
+            data = json.loads(data)
+        if isinstance(filters, str):
+            filters = json.loads(filters)
+        
+        service = DataService()
+        result = service.filter_data(data, filters)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en filter_data: {str(e)}", "DataService Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def aggregate_data(data, group_by, aggregations):
+    # Agrupa y agrega datos
+    try:
+        import json
+        from ...domain.widget_service.data_service import DataService
+        
+        # Parsear JSON si viene como string
+        if isinstance(data, str):
+            data = json.loads(data)
+        if isinstance(group_by, str):
+            group_by = json.loads(group_by)
+        if isinstance(aggregations, str):
+            aggregations = json.loads(aggregations)
+        
+        service = DataService()
+        result = service.aggregate_data(data, group_by, aggregations)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en aggregate_data: {str(e)}", "DataService Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def preview_widget(data, widget_type, widget_config=None):
+    # Genera preview de widget
+    try:
+        import json
+        from ...domain.widget_service.data_service import DataService
+        
+        # Parsear JSON si viene como string
+        if isinstance(data, str):
+            data = json.loads(data)
+        if isinstance(widget_config, str):
+            widget_config = json.loads(widget_config)
+        
+        service = DataService()
+        result = service.preview_widget(data, widget_type, widget_config)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en preview_widget: {str(e)}", "DataService Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def validate_config(config, data_columns):
+    # Valida configuración de mapper
+    try:
+        import json
+        from ...domain.widget_service.data_service import DataService
+        
+        # Parsear JSON si viene como string
+        if isinstance(config, str):
+            config = json.loads(config)
+        if isinstance(data_columns, str):
+            data_columns = json.loads(data_columns)
+        
+        service = DataService()
+        result = service.validate_config(config, data_columns)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en validate_config: {str(e)}", "DataService Error")
+        return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def get_column_stats(data, column):
+    # Obtiene estadísticas de una columna
+    try:
+        import json
+        from ...domain.widget_service.data_service import DataService
+        
+        # Parsear JSON si viene como string
+        if isinstance(data, str):
+            data = json.loads(data)
+        
+        service = DataService()
+        result = service.get_column_stats(data, column)
+        
+        return result
+        
+    except Exception as e:
+        frappe.log_error(f"Error en get_column_stats: {str(e)}", "DataService Error")
         return {"success": False, "error": str(e)}

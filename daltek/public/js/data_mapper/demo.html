@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Mapper - Procesador de Tablas</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .demo-header h1 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .demo-controls {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1><i class="fa fa-table"></i> Data Mapper - Procesador de Tablas</h1>
+            <p>Interfaz interactiva para procesar y transformar datos de consultas SQL</p>
+            
+            <div class="demo-controls">
+                <button class="btn btn-primary" onclick="loadDemoData()">
+                    <i class="fa fa-play"></i> Cargar Datos Demo
+                </button>
+                <button class="btn btn-success" onclick="loadSalesData()">
+                    <i class="fa fa-shopping-cart"></i> Demo: Ventas
+                </button>
+                <button class="btn btn-info" onclick="loadProductsData()">
+                    <i class="fa fa-cubes"></i> Demo: Productos
+                </button>
+                <button class="btn btn-warning" onclick="loadCustomersData()">
+                    <i class="fa fa-users"></i> Demo: Clientes
+                </button>
+            </div>
+        </div>
+
+        <!-- Contenedor para la tabla de datos -->
+        <div id="data-table-container"></div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    
+    <!-- Mock de Frappe UI para standalone -->
+    <script>
+        // Mock básico de frappe.ui.Dialog para testing standalone
+        if (typeof frappe === 'undefined') {
+            window.frappe = {
+                ui: {
+                    Dialog: class {
+                        constructor(opts) {
+                            this.opts = opts;
+                            this.$wrapper = $('<div>');
+                        }
+                        show() {
+                            const fields = this.opts.fields || [];
+                            let html = `<div class="modal fade" tabindex="-1" role="dialog">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            <h4 class="modal-title">${this.opts.title}</h4>
+                                        </div>
+                                        <div class="modal-body">`;
+                            
+                            fields.forEach(field => {
+                                if (field.fieldtype === 'Select') {
+                                    const options = Array.isArray(field.options) 
+                                        ? field.options 
+                                        : field.options.split('\n');
+                                    html += `<div class="form-group">
+                                        <label>${field.label}</label>
+                                        <select class="form-control" name="${field.fieldname}">
+                                            ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                                        </select>
+                                    </div>`;
+                                } else if (field.fieldtype === 'Data') {
+                                    html += `<div class="form-group">
+                                        <label>${field.label}</label>
+                                        <input type="text" class="form-control" name="${field.fieldname}">
+                                    </div>`;
+                                } else if (field.fieldtype === 'Small Text') {
+                                    html += `<div class="form-group">
+                                        <label>${field.label}</label>
+                                        <textarea class="form-control" name="${field.fieldname}" rows="3"></textarea>
+                                        ${field.description ? `<small class="text-muted">${field.description}</small>` : ''}
+                                    </div>`;
+                                } else if (field.fieldtype === 'Code') {
+                                    html += `<div class="form-group">
+                                        <label>${field.label}</label>
+                                        <textarea class="form-control" name="${field.fieldname}" rows="10" style="font-family: monospace;">${field.default || ''}</textarea>
+                                    </div>`;
+                                } else if (field.fieldtype === 'HTML') {
+                                    html += field.options;
+                                }
+                            });
+                            
+                            html += `</div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                            <button type="button" class="btn btn-primary" id="modal-primary-btn">
+                                                ${this.opts.primary_action_label || 'Aceptar'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                            
+                            const $modal = $(html);
+                            this.$wrapper = $modal;
+                            $('body').append($modal);
+                            $modal.modal('show');
+                            
+                            $modal.find('#modal-primary-btn').on('click', () => {
+                                const values = {};
+                                fields.forEach(field => {
+                                    const $input = $modal.find(`[name="${field.fieldname}"]`);
+                                    if ($input.length) {
+                                        values[field.fieldname] = $input.val();
+                                    }
+                                });
+                                if (this.opts.primary_action) {
+                                    this.opts.primary_action(values);
+                                }
+                            });
+                            
+                            $modal.on('hidden.bs.modal', () => {
+                                $modal.remove();
+                            });
+                        }
+                        hide() {
+                            this.$wrapper.modal('hide');
+                        }
+                    }
+                },
+                show_alert: function(opts) {
+                    const color = opts.indicator === 'green' ? 'success' : 
+                                opts.indicator === 'red' ? 'danger' : 'info';
+                    const html = `<div class="alert alert-${color}" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 250px;">
+                        ${opts.message}
+                    </div>`;
+                    const $alert = $(html);
+                    $('body').append($alert);
+                    setTimeout(() => $alert.fadeOut(() => $alert.remove()), 3000);
+                },
+                msgprint: function(opts) {
+                    alert(opts.message || opts);
+                }
+            };
+        }
+    </script>
+    
+    <!-- Data Mapper Scripts -->
+    <script src="table_processor.js"></script>
+    <script src="data_table_ui.js"></script>
+    
+    <!-- Demo Data y Funciones -->
+    <script>
+        // Datos de demo: Ventas mensuales
+        function loadSalesData() {
+            const data = [
+                {mes: 'Enero', categoria: 'Electrónica', producto: 'Laptop', ventas: 15000, cantidad: 10, costo: 12000},
+                {mes: 'Enero', categoria: 'Electrónica', producto: 'Mouse', ventas: 500, cantidad: 25, costo: 300},
+                {mes: 'Enero', categoria: 'Ropa', producto: 'Camisa', ventas: 3000, cantidad: 50, costo: 2000},
+                {mes: 'Febrero', categoria: 'Electrónica', producto: 'Laptop', ventas: 18000, cantidad: 12, costo: 14400},
+                {mes: 'Febrero', categoria: 'Electrónica', producto: 'Teclado', ventas: 1200, cantidad: 20, costo: 800},
+                {mes: 'Febrero', categoria: 'Ropa', producto: 'Pantalón', ventas: 4500, cantidad: 30, costo: 3000},
+                {mes: 'Marzo', categoria: 'Electrónica', producto: 'Monitor', ventas: 9000, cantidad: 15, costo: 7000},
+                {mes: 'Marzo', categoria: 'Ropa', producto: 'Camisa', ventas: 3500, cantidad: 60, costo: 2200},
+                {mes: 'Marzo', categoria: 'Alimentos', producto: 'Café', ventas: 800, cantidad: 100, costo: 500},
+                {mes: 'Abril', categoria: 'Electrónica', producto: 'Laptop', ventas: 22000, cantidad: 15, costo: 17000},
+                {mes: 'Abril', categoria: 'Alimentos', producto: 'Té', ventas: 600, cantidad: 80, costo: 400},
+                {mes: 'Abril', categoria: 'Ropa', producto: 'Zapatos', ventas: 7500, cantidad: 25, costo: 5000},
+            ];
+            
+            initializeUI(data, 'Query: Reporte de Ventas 2024');
+        }
+
+        // Datos de demo: Productos
+        function loadProductsData() {
+            const data = [
+                {id: 'P001', nombre: 'Laptop HP', categoria: 'Electrónica', precio: 1500, stock: 45, proveedor: 'Tech Corp'},
+                {id: 'P002', nombre: 'Mouse Logitech', categoria: 'Electrónica', precio: 25, stock: 120, proveedor: 'Tech Corp'},
+                {id: 'P003', nombre: 'Teclado Mecánico', categoria: 'Electrónica', precio: 80, stock: 60, proveedor: 'Gadgets SA'},
+                {id: 'P004', nombre: 'Camisa Formal', categoria: 'Ropa', precio: 45, stock: 200, proveedor: 'Fashion Store'},
+                {id: 'P005', nombre: 'Pantalón Jeans', categoria: 'Ropa', precio: 60, stock: 150, proveedor: 'Fashion Store'},
+                {id: 'P006', nombre: 'Zapatos Deportivos', categoria: 'Calzado', precio: 90, stock: 80, proveedor: 'Sports Plus'},
+                {id: 'P007', nombre: 'Café Premium', categoria: 'Alimentos', precio: 12, stock: 300, proveedor: 'Food Suppliers'},
+                {id: 'P008', nombre: 'Té Verde', categoria: 'Alimentos', precio: 8, stock: 250, proveedor: 'Food Suppliers'},
+                {id: 'P009', nombre: 'Monitor 24"', categoria: 'Electrónica', precio: 250, stock: 35, proveedor: 'Tech Corp'},
+                {id: 'P010', nombre: 'Webcam HD', categoria: 'Electrónica', precio: 65, stock: 90, proveedor: 'Gadgets SA'},
+            ];
+            
+            initializeUI(data, 'Query: Catálogo de Productos');
+        }
+
+        // Datos de demo: Clientes
+        function loadCustomersData() {
+            const data = [
+                {id: 'C001', nombre: 'Juan Pérez', ciudad: 'Madrid', pais: 'España', total_compras: 5400, num_pedidos: 12},
+                {id: 'C002', nombre: 'María García', ciudad: 'Barcelona', pais: 'España', total_compras: 8200, num_pedidos: 18},
+                {id: 'C003', nombre: 'Carlos López', ciudad: 'Valencia', pais: 'España', total_compras: 3100, num_pedidos: 7},
+                {id: 'C004', nombre: 'Ana Martínez', ciudad: 'Sevilla', pais: 'España', total_compras: 9500, num_pedidos: 22},
+                {id: 'C005', nombre: 'Pedro Sánchez', ciudad: 'Lisboa', pais: 'Portugal', total_compras: 4300, num_pedidos: 9},
+                {id: 'C006', nombre: 'Laura Fernández', ciudad: 'Porto', pais: 'Portugal', total_compras: 6700, num_pedidos: 15},
+                {id: 'C007', nombre: 'Miguel Rodríguez', ciudad: 'Madrid', pais: 'España', total_compras: 12000, num_pedidos: 28},
+                {id: 'C008', nombre: 'Isabel González', ciudad: 'Barcelona', pais: 'España', total_compras: 7800, num_pedidos: 16},
+            ];
+            
+            initializeUI(data, 'Query: Base de Clientes');
+        }
+
+        // Cargar datos demo generales
+        function loadDemoData() {
+            loadSalesData();
+        }
+
+        // Inicializa la UI con datos
+        function initializeUI(data, queryName) {
+            window.dataTableUI = new DataTableUI('data-table-container');
+            window.dataTableUI.init(data, queryName);
+            
+            // Scroll suave al contenedor
+            setTimeout(() => {
+                document.getElementById('data-table-container').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
+        }
+
+        // Cargar datos por defecto al iniciar
+        window.addEventListener('load', () => {
+            console.log('Data Mapper UI cargado correctamente');
+        });
+    </script>
+</body>
+</html>
