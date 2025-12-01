@@ -34,9 +34,6 @@ class DataTableUI {
                         <span class="badge badge-info">${this.processor.processedData.length} registros</span>
                     </div>
                     <div class="header-controls">
-                        <button class="btn btn-sm btn-default" id="btn-calculate">
-                            <i class="fa fa-calculator"></i> Calcular
-                        </button>
                         <button class="btn btn-sm btn-warning" id="btn-undo">
                             <i class="fa fa-undo"></i> Deshacer
                         </button>
@@ -509,6 +506,10 @@ class DataTableUI {
             existingMenu.remove();
         }
 
+        // Verificar si la columna es numérica
+        const column = this.processor.columns.find(c => c.name === columnName);
+        const isNumeric = column && column.type === 'number';
+
         const menu = document.createElement('div');
         menu.className = 'column-context-menu';
         menu.style.cssText = `
@@ -540,6 +541,15 @@ class DataTableUI {
             <a href="#" class="menu-item" data-action="group" style="display: block; padding: 8px 15px; text-decoration: none; color: #333;">
                 <i class="fa fa-object-group"></i> Agrupar por esta columna
             </a>
+            ${
+                isNumeric ? `
+                <div style="border-top: 1px solid #eee; margin: 5px 0;"></div>
+                <div style="padding: 5px 15px; font-weight: bold; color: #888; font-size: 11px; text-transform: uppercase;">Calcular</div>
+                <a href="#" class="menu-item" data-action="calculate" style="display: block; padding: 8px 15px; text-decoration: none; color: #333;">
+                    <i class="fa fa-calculator"></i> Calcular con esta columna
+                </a>
+                ` : ''
+            }
         `;
 
         // Posicionar el menú
@@ -567,6 +577,8 @@ class DataTableUI {
                     this.showFilterDialogForColumn(columnName);
                 } else if (action === 'group') {
                     this.showGroupByDialogForColumn(columnName);
+                } else if (action === 'calculate') {
+                    this.showCalculateDialogForColumn(columnName);
                 }
                 
                 menu.remove();
@@ -593,14 +605,6 @@ class DataTableUI {
 
     // Adjunta event listeners
     attachEvents() {
-        // Botón calcular
-        const btnCalculate = document.getElementById('btn-calculate');
-        if (btnCalculate) {
-            btnCalculate.addEventListener('click', () => {
-                this.showCalculateDialog();
-            });
-        }
-
         // Botón deshacer
         const btnUndo = document.getElementById('btn-undo');
         if (btnUndo) {
@@ -765,25 +769,21 @@ class DataTableUI {
     }
 
     // Muestra diálogo para calcular columna
-    showCalculateDialog() {
+    showCalculateDialogForColumn(columnName) {
+        this.showCalculateDialog(columnName);
+    }
+
+    showCalculateDialog(preselectedColumn = null) {
         const columns = this.processor.columns.map(c => c.name);
+        const numericColumns = this.processor.columns.filter(c => c.type === 'number').map(c => c.name);
         
-        // Generar ejemplos con columnas reales
-        let ejemplos = 'Ejemplos:<br>';
-        if (columns.includes('ventas') && columns.includes('cantidad')) {
-            ejemplos += '• ventas * cantidad (Total)<br>';
+        if (numericColumns.length === 0) {
+            frappe.msgprint('No hay columnas numéricas disponibles para calcular');
+            return;
         }
-        if (columns.includes('ventas') && columns.includes('costo')) {
-            ejemplos += '• ventas - costo (Ganancia)<br>';
-            ejemplos += '• costo * 0.16 (IVA)<br>';
-        }
-        if (columns.includes('precio') && columns.includes('stock')) {
-            ejemplos += '• precio * stock (Valor inventario)<br>';
-        }
-        ejemplos += `<br><strong>Columnas disponibles:</strong> ${columns.join(', ')}`;
         
         const dialog = new frappe.ui.Dialog({
-            title: 'Calcular Columna',
+            title: 'Calcular Nueva Columna',
             fields: [
                 {
                     fieldtype: 'Data',
@@ -792,25 +792,51 @@ class DataTableUI {
                     reqd: 1
                 },
                 {
-                    fieldtype: 'Small Text',
-                    fieldname: 'formula',
-                    label: 'Fórmula',
-                    description: ejemplos,
-                    reqd: 1
+                    fieldtype: 'HTML',
+                    fieldname: 'formula_builder',
+                    options: `
+                        <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; background: #f9f9f9;">
+                            <label style="font-weight: bold; margin-bottom: 10px; display: block;">Constructor de Fórmula</label>
+                            
+                            <div id="operations-container">
+                                <!-- Las operaciones se agregarán aquí dinámicamente -->
+                            </div>
+                            
+                            <button type="button" class="btn btn-sm btn-success" id="add-operation-btn" style="margin-bottom: 15px;">
+                                <i class="fa fa-plus"></i> Agregar Operación
+                            </button>
+                            
+                            <div style="background: white; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
+                                <strong>Fórmula:</strong> <span id="formula-preview" style="color: #2490ef; font-family: monospace;">${preselectedColumn || '-'}</span>
+                            </div>
+                        </div>
+                    `
                 }
             ],
             primary_action_label: 'Calcular',
             primary_action: (values) => {
+                const formula = document.getElementById('formula-preview').textContent;
+                
+                if (!formula || formula === '-') {
+                    frappe.msgprint('Por favor agrega al menos una operación');
+                    return;
+                }
+                
+                if (!values.column_name) {
+                    frappe.msgprint('Por favor ingresa un nombre para la columna');
+                    return;
+                }
+                
                 try {
-                    this.processor.calculate(values.column_name, values.formula);
+                    this.processor.calculate(values.column_name, formula);
                     this.renderTable();
                     this.renderOperations();
                     dialog.hide();
-                    frappe.show_alert({message: 'Columna calculada', indicator: 'green'});
+                    frappe.show_alert({message: 'Columna calculada correctamente', indicator: 'green'});
                 } catch(e) {
                     frappe.msgprint({
                         title: 'Error',
-                        message: 'Fórmula inválida: ' + e.message,
+                        message: 'Error al calcular: ' + e.message,
                         indicator: 'red'
                     });
                 }
@@ -818,6 +844,116 @@ class DataTableUI {
         });
 
         dialog.show();
+        
+        // Lógica para operaciones encadenadas
+        setTimeout(() => {
+            let operationCounter = 0;
+            let currentFormula = preselectedColumn || '';
+            
+            const updatePreview = () => {
+                document.getElementById('formula-preview').textContent = currentFormula || '-';
+            };
+            
+            const addOperation = () => {
+                operationCounter++;
+                const opId = `op-${operationCounter}`;
+                
+                const operationHTML = `
+                    <div class="operation-row" id="${opId}" style="margin-bottom: 15px; padding: 10px; background: white; border-radius: 4px; border: 1px solid #ddd;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong>Operación ${operationCounter}</strong>
+                            <button type="button" class="btn btn-xs btn-danger remove-op-btn" data-id="${opId}">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 5px;">Operador:</label>
+                            <div style="display: flex; gap: 5px;">
+                                <button type="button" class="btn btn-sm btn-default op-btn" data-id="${opId}" data-op="+">+</button>
+                                <button type="button" class="btn btn-sm btn-default op-btn" data-id="${opId}" data-op="-">−</button>
+                                <button type="button" class="btn btn-sm btn-default op-btn" data-id="${opId}" data-op="*">×</button>
+                                <button type="button" class="btn btn-sm btn-default op-btn" data-id="${opId}" data-op="/">/</button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 5px;">Columna / Valor:</label>
+                            <select class="form-control op-column" data-id="${opId}" style="margin-bottom: 5px;">
+                                <option value="">-- Seleccionar columna --</option>
+                                ${numericColumns.map(col => `<option value="${col}">${col}</option>`).join('')}
+                            </select>
+                            <input type="number" class="form-control op-value" data-id="${opId}" placeholder="O ingresa un valor" step="any">
+                        </div>
+                        
+                        <input type="hidden" class="op-operator" data-id="${opId}">
+                        <input type="hidden" class="op-operand" data-id="${opId}">
+                    </div>
+                `;
+                
+                document.getElementById('operations-container').insertAdjacentHTML('beforeend', operationHTML);
+                attachOperationListeners(opId);
+            };
+            
+            const attachOperationListeners = (opId) => {
+                // Botones de operador
+                document.querySelectorAll(`.op-btn[data-id="${opId}"]`).forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll(`.op-btn[data-id="${opId}"]`).forEach(b => b.classList.remove('btn-primary'));
+                        this.classList.add('btn-primary');
+                        document.querySelector(`.op-operator[data-id="${opId}"]`).value = this.getAttribute('data-op');
+                        buildFormula();
+                    });
+                });
+                
+                // Select de columna
+                document.querySelector(`.op-column[data-id="${opId}"]`).addEventListener('change', function() {
+                    document.querySelector(`.op-value[data-id="${opId}"]`).value = '';
+                    document.querySelector(`.op-operand[data-id="${opId}"]`).value = this.value;
+                    buildFormula();
+                });
+                
+                // Input de valor
+                document.querySelector(`.op-value[data-id="${opId}"]`).addEventListener('input', function() {
+                    document.querySelector(`.op-column[data-id="${opId}"]`).value = '';
+                    document.querySelector(`.op-operand[data-id="${opId}"]`).value = this.value;
+                    buildFormula();
+                });
+                
+                // Botón eliminar
+                document.querySelector(`.remove-op-btn[data-id="${opId}"]`).addEventListener('click', function() {
+                    document.getElementById(opId).remove();
+                    buildFormula();
+                });
+            };
+            
+            const buildFormula = () => {
+                let formula = preselectedColumn || '';
+                
+                document.querySelectorAll('.operation-row').forEach(opRow => {
+                    const opId = opRow.id;
+                    const operator = document.querySelector(`.op-operator[data-id="${opId}"]`).value;
+                    const operand = document.querySelector(`.op-operand[data-id="${opId}"]`).value;
+                    
+                    if (operator && operand) {
+                        formula += ` ${operator} ${operand}`;
+                    }
+                });
+                
+                currentFormula = formula;
+                updatePreview();
+            };
+            
+            // Botón agregar operación
+            document.getElementById('add-operation-btn').addEventListener('click', addOperation);
+            
+            // Agregar primera operación automáticamente
+            if (preselectedColumn) {
+                addOperation();
+            }
+            
+            updatePreview();
+        }, 100);
     }
 
     // Exporta la configuración como JSON
