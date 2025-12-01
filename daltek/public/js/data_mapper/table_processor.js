@@ -8,6 +8,7 @@ class TableProcessor {
         this.queryName = queryName;
         this.operations = []; // Historial de operaciones
         this.columns = this.detectColumns();
+        this.originalColumns = JSON.parse(JSON.stringify(this.columns)); // Guardar columnas originales
     }
 
     // Detecta las columnas del dataset
@@ -20,16 +21,46 @@ class TableProcessor {
         return Object.keys(firstRow).map(key => ({
             name: key,
             type: this.detectColumnType(key),
-            visible: true
+            visible: true,
+            calculated: false
         }));
+    }
+
+    // Actualiza las columnas desde los datos procesados (incluye columnas calculadas)
+    updateColumns() {
+        if (!this.processedData || this.processedData.length === 0) {
+            return;
+        }
+
+        const firstRow = this.processedData[0];
+        const currentColumnNames = this.columns.map(c => c.name);
+        
+        // Agregar columnas nuevas que no existen
+        Object.keys(firstRow).forEach(key => {
+            if (!currentColumnNames.includes(key)) {
+                console.log('Agregando columna nueva detectada:', key);
+                this.columns.push({
+                    name: key,
+                    type: this.detectColumnType(key),
+                    visible: true,
+                    calculated: true
+                });
+            }
+        });
     }
 
     // Detecta el tipo de datos de una columna
     detectColumnType(columnName) {
-        const sample = this.originalData.slice(0, 10).map(row => row[columnName]);
+        // Usar processedData para incluir columnas calculadas
+        const dataSource = this.processedData.length > 0 ? this.processedData : this.originalData;
+        const sample = dataSource.slice(0, 10).map(row => row[columnName]).filter(val => val !== undefined && val !== null);
+        
+        if (sample.length === 0) {
+            return 'text';
+        }
         
         // Verificar si es número
-        if (sample.every(val => !isNaN(val) && val !== null && val !== '')) {
+        if (sample.every(val => !isNaN(val) && val !== '')) {
             return 'number';
         }
         
@@ -43,6 +74,16 @@ class TableProcessor {
 
     // Aplica un filtro a los datos
     applyFilter(column, operator, value) {
+        // Check if there's already a filter on the same column with the same operator
+        const existingFilterIndex = this.operations.findIndex(
+            op => op.type === 'filter' && op.column === column && op.operator === operator
+        );
+        
+        // If exists, remove it before applying the new one
+        if (existingFilterIndex !== -1) {
+            this.operations.splice(existingFilterIndex, 1);
+        }
+
         const operation = {
             type: 'filter',
             column: column,
@@ -148,25 +189,34 @@ class TableProcessor {
 
                 switch(aggFunc) {
                     case 'sum':
-                        result[`${aggColumn}_sum`] = values.reduce((a, b) => a + b, 0);
+                        result[aggColumn] = values.reduce((a, b) => a + b, 0);
                         break;
                     case 'avg':
-                        result[`${aggColumn}_avg`] = values.reduce((a, b) => a + b, 0) / values.length;
+                        result[aggColumn] = values.reduce((a, b) => a + b, 0) / values.length;
                         break;
                     case 'count':
-                        result[`${aggColumn}_count`] = group.length;
+                        result[aggColumn] = group.length;
                         break;
                     case 'min':
-                        result[`${aggColumn}_min`] = Math.min(...values);
+                        result[aggColumn] = Math.min(...values);
                         break;
                     case 'max':
-                        result[`${aggColumn}_max`] = Math.max(...values);
+                        result[aggColumn] = Math.max(...values);
                         break;
                 }
             });
 
             return result;
         });
+
+        // Actualizar columnas para mostrar solo las relevantes (columna de agrupación + columnas agregadas)
+        const relevantColumns = [column, ...Object.keys(aggregations)];
+        this.columns = relevantColumns.map(col => ({
+            name: col,
+            type: this.detectColumnType(col),
+            visible: true,
+            calculated: false
+        }));
 
         this.operations.push(operation);
         return this;
@@ -218,7 +268,6 @@ class TableProcessor {
 
         this.processedData = this.processedData.map(row => {
             try {
-                // Evaluar fórmula simple (ej: "column1 + column2")
                 const result = this.evaluateFormula(formula, row);
                 row[newColumn] = result;
             } catch(e) {
@@ -227,27 +276,57 @@ class TableProcessor {
             return row;
         });
 
+        // Agregar nueva columna si no existe
+        const existingCol = this.columns.find(col => col.name === newColumn);
+        if (existingCol) {
+            existingCol.calculated = true;
+        } else {
+            this.columns.push({
+                name: newColumn,
+                type: 'number',
+                visible: true,
+                calculated: true
+            });
+        }
+
         this.operations.push(operation);
         return this;
     }
 
     // Evalúa una fórmula simple
     evaluateFormula(formula, row) {
-        // Reemplazar nombres de columnas por valores
         let expression = formula;
-        Object.keys(row).forEach(col => {
-            const value = parseFloat(row[col]) || 0;
-            expression = expression.replace(new RegExp(`\\b${col}\\b`, 'g'), value);
+        
+        // Ordenar columnas por longitud (más largas primero) para evitar reemplazos parciales
+        const columns = Object.keys(row).sort((a, b) => b.length - a.length);
+        
+        columns.forEach(col => {
+            const value = parseFloat(row[col]);
+            if (!isNaN(value)) {
+                const escapedCol = col.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                expression = expression.replace(new RegExp(`\\b${escapedCol}\\b`, 'g'), value);
+            }
         });
 
-        // Evaluar expresión matemática simple
         return Function('"use strict"; return (' + expression + ')')();
     }
 
     // Resetea a datos originales
     reset() {
+        console.log('TableProcessor.reset() called');
+        console.log('Before reset - operations:', this.operations.length);
+        console.log('Before reset - columns:', this.columns.length);
+        
         this.processedData = JSON.parse(JSON.stringify(this.originalData));
         this.operations = [];
+        
+        // Restaurar columnas originales (sin columnas calculadas)
+        this.columns = JSON.parse(JSON.stringify(this.originalColumns));
+        
+        console.log('After reset - operations:', this.operations.length);
+        console.log('After reset - columns:', this.columns.length);
+        console.log('After reset - processedData rows:', this.processedData.length);
+        
         return this;
     }
 

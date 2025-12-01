@@ -34,12 +34,6 @@ class DataTableUI {
                         <span class="badge badge-info">${this.processor.processedData.length} registros</span>
                     </div>
                     <div class="header-controls">
-                        <button class="btn btn-sm btn-default" id="btn-add-filter">
-                            <i class="fa fa-filter"></i> Añadir Filtro
-                        </button>
-                        <button class="btn btn-sm btn-default" id="btn-group-by">
-                            <i class="fa fa-object-group"></i> Agrupar
-                        </button>
                         <button class="btn btn-sm btn-default" id="btn-calculate">
                             <i class="fa fa-calculator"></i> Calcular
                         </button>
@@ -144,6 +138,23 @@ class DataTableUI {
             .operation-tag.group_by { background: #ffc107; color: #333; }
             .operation-tag.calculate { background: #6f42c1; }
 
+            .operation-tag .remove-operation {
+                margin-left: 8px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 18px;
+                opacity: 0.7;
+                transition: opacity 0.2s;
+            }
+
+            .operation-tag .remove-operation:hover {
+                opacity: 1;
+            }
+
+            .operation-tag.group_by .remove-operation {
+                color: #333;
+            }
+
             .active-filters {
                 margin-bottom: 15px;
             }
@@ -192,6 +203,9 @@ class DataTableUI {
                 padding: 12px 8px;
                 background: #f5f5f5;
                 font-weight: 600;
+                max-width: 200px;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             #data-table th:hover {
@@ -210,10 +224,34 @@ class DataTableUI {
             #data-table td {
                 padding: 8px;
                 white-space: nowrap;
+                max-width: 200px;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             #data-table tbody tr:hover {
                 background: #f9f9f9;
+            }
+
+            /* Columnas calculadas */
+            #data-table th.calculated-column {
+                background: #e3f2fd;
+                color: #1976d2;
+                font-weight: 700;
+            }
+
+            #data-table th.calculated-column:hover {
+                background: #bbdefb;
+            }
+
+            #data-table td.calculated-column {
+                background: #f1f8ff;
+                color: #0d47a1;
+                font-weight: 500;
+            }
+
+            #data-table tbody tr:hover td.calculated-column {
+                background: #e3f2fd;
             }
 
             .pagination-container {
@@ -239,8 +277,10 @@ class DataTableUI {
 
     // Renderiza la tabla de datos
     renderTable() {
+        console.log('renderTable() called');
         const data = this.processor.getData();
         const columns = this.processor.columns;
+        console.log('Rendering table with', data.length, 'rows and', columns.length, 'columns');
 
         // Renderizar encabezados
         const thead = document.getElementById('table-head');
@@ -250,16 +290,31 @@ class DataTableUI {
             if (!col.visible) return;
             
             const th = document.createElement('th');
-            th.innerHTML = `
-                ${col.name} 
-                <span class="sort-icon ${this.sortColumn === col.name ? 'sorted' : ''}">
-                    ${this.sortColumn === col.name 
-                        ? (this.sortOrder === 'asc' ? '▲' : '▼') 
-                        : '⇅'}
-                </span>
-            `;
+            // Marcar columnas calculadas
+            if (col.calculated) {
+                th.classList.add('calculated-column');
+            }
+            th.style.position = 'relative';
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.style.cssText = 'display: flex; align-items: center; justify-content: space-between;';
+            
+            const colName = document.createElement('span');
+            colName.textContent = col.name + (col.calculated ? ' 🧮' : '');
+            
+            const menuBtn = document.createElement('button');
+            menuBtn.className = 'btn btn-xs btn-default';
+            menuBtn.style.cssText = 'padding: 2px 5px; margin-left: 5px;';
+            menuBtn.textContent = '⋮';
+            menuBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.showColumnMenu(col.name, menuBtn);
+            };
+            
+            headerDiv.appendChild(colName);
+            headerDiv.appendChild(menuBtn);
+            th.appendChild(headerDiv);
             th.dataset.column = col.name;
-            th.addEventListener('click', () => this.handleSort(col.name));
             headerRow.appendChild(th);
         });
         
@@ -279,6 +334,10 @@ class DataTableUI {
             columns.forEach(col => {
                 if (!col.visible) return;
                 const td = document.createElement('td');
+                // Marcar celdas de columnas calculadas
+                if (col.calculated) {
+                    td.classList.add('calculated-column');
+                }
                 td.textContent = row[col.name] !== undefined ? row[col.name] : '';
                 tr.appendChild(td);
             });
@@ -334,7 +393,7 @@ class DataTableUI {
             return;
         }
 
-        container.innerHTML = operations.map(op => {
+        container.innerHTML = operations.map((op, index) => {
             let text = '';
             switch(op.type) {
                 case 'filter':
@@ -355,22 +414,175 @@ class DataTableUI {
                 default:
                     text = op.type;
             }
-            return `<span class="operation-tag ${op.type}">${text}</span>`;
+            return `
+                <span class="operation-tag ${op.type}">
+                    ${text}
+                    <span class="remove-operation" data-index="${index}" title="Eliminar operación">
+                        ×
+                    </span>
+                </span>`;
         }).join('');
+
+        // Agregar event listeners a los botones de eliminar
+        container.querySelectorAll('.remove-operation').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                this.removeOperation(index);
+            });
+        });
+    }
+
+    // Elimina una operación específica y re-aplica las restantes
+    removeOperation(index) {
+        if (index < 0 || index >= this.processor.operations.length) return;
+
+        // Guardar operaciones excepto la eliminada
+        const operations = [...this.processor.operations];
+        operations.splice(index, 1);
+
+        // Reset y re-aplicar operaciones
+        this.processor.reset();
+        operations.forEach(op => {
+            switch(op.type) {
+                case 'filter':
+                    this.processor.applyFilter(op.column, op.operator, op.value);
+                    break;
+                case 'sort':
+                    this.processor.sort(op.column, op.order);
+                    break;
+                case 'group_by':
+                    this.processor.groupBy(op.columns, op.aggregations);
+                    break;
+                case 'calculate':
+                    this.processor.calculate(op.column, op.formula);
+                    break;
+                case 'limit':
+                    this.processor.limit(op.count);
+                    break;
+            }
+        });
+
+        // Re-renderizar
+        this.currentPage = 1;
+        this.renderTable();
+        this.renderOperations();
+        frappe.show_alert({message: 'Operación eliminada', indicator: 'orange'});
     }
 
     // Maneja el ordenamiento de columnas
-    handleSort(column) {
-        if (this.sortColumn === column) {
-            this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-        } else {
+    handleSort(column, order = null) {
+        // Si se proporciona un orden específico, usarlo
+        if (order) {
             this.sortColumn = column;
-            this.sortOrder = 'asc';
+            this.sortOrder = order;
+        } else {
+            // Determinar nuevo orden (comportamiento de toggle)
+            if (this.sortColumn === column) {
+                this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                this.sortColumn = column;
+                this.sortOrder = 'asc';
+            }
         }
 
+        // Buscar si ya existe un sort en las operaciones
+        const existingSortIndex = this.processor.operations.findIndex(
+            op => op.type === 'sort' && op.column === column
+        );
+
+        // Si existe, eliminarlo primero
+        if (existingSortIndex !== -1) {
+            this.processor.operations.splice(existingSortIndex, 1);
+        }
+
+        // Aplicar el nuevo sort
         this.processor.sort(column, this.sortOrder);
         this.renderTable();
         this.renderOperations();
+    }
+
+    // Muestra menú contextual para columna
+    showColumnMenu(columnName, buttonElement) {
+        // Remover menú anterior si existe
+        const existingMenu = document.querySelector('.column-context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        const menu = document.createElement('div');
+        menu.className = 'column-context-menu';
+        menu.style.cssText = `
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 180px;
+            padding: 5px 0;
+        `;
+
+        menu.innerHTML = `
+            <div style="padding: 5px 15px; font-weight: bold; color: #888; font-size: 11px; text-transform: uppercase;">Ordenar</div>
+            <a href="#" class="menu-item" data-action="sort-asc" style="display: block; padding: 8px 15px; text-decoration: none; color: #333;">
+                <i class="fa fa-sort-amount-asc"></i> Ascendente
+            </a>
+            <a href="#" class="menu-item" data-action="sort-desc" style="display: block; padding: 8px 15px; text-decoration: none; color: #333;">
+                <i class="fa fa-sort-amount-desc"></i> Descendente
+            </a>
+            <div style="border-top: 1px solid #eee; margin: 5px 0;"></div>
+            <div style="padding: 5px 15px; font-weight: bold; color: #888; font-size: 11px; text-transform: uppercase;">Filtrar</div>
+            <a href="#" class="menu-item" data-action="filter" style="display: block; padding: 8px 15px; text-decoration: none; color: #333;">
+                <i class="fa fa-filter"></i> Agregar filtro
+            </a>
+            <div style="border-top: 1px solid #eee; margin: 5px 0;"></div>
+            <div style="padding: 5px 15px; font-weight: bold; color: #888; font-size: 11px; text-transform: uppercase;">Agrupar</div>
+            <a href="#" class="menu-item" data-action="group" style="display: block; padding: 8px 15px; text-decoration: none; color: #333;">
+                <i class="fa fa-object-group"></i> Agrupar por esta columna
+            </a>
+        `;
+
+        // Posicionar el menú
+        const rect = buttonElement.getBoundingClientRect();
+        menu.style.top = `${rect.bottom + window.scrollY}px`;
+        menu.style.left = `${rect.left + window.scrollX}px`;
+
+        // Agregar event listeners
+        menu.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('mouseenter', (e) => {
+                e.target.style.backgroundColor = '#f5f5f5';
+            });
+            item.addEventListener('mouseleave', (e) => {
+                e.target.style.backgroundColor = 'white';
+            });
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const action = e.currentTarget.getAttribute('data-action');
+                
+                if (action === 'sort-asc') {
+                    this.handleSort(columnName, 'asc');
+                } else if (action === 'sort-desc') {
+                    this.handleSort(columnName, 'desc');
+                } else if (action === 'filter') {
+                    this.showFilterDialogForColumn(columnName);
+                } else if (action === 'group') {
+                    this.showGroupByDialogForColumn(columnName);
+                }
+                
+                menu.remove();
+            });
+        });
+
+        document.body.appendChild(menu);
+
+        // Cerrar menú al hacer clic fuera
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target) && e.target !== buttonElement) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closeMenu), 0);
     }
 
     // Navega a una página específica
@@ -381,57 +593,75 @@ class DataTableUI {
 
     // Adjunta event listeners
     attachEvents() {
-        // Botón añadir filtro
-        document.getElementById('btn-add-filter').addEventListener('click', () => {
-            this.showFilterDialog();
-        });
-
-        // Botón agrupar
-        document.getElementById('btn-group-by').addEventListener('click', () => {
-            this.showGroupByDialog();
-        });
-
         // Botón calcular
-        document.getElementById('btn-calculate').addEventListener('click', () => {
-            this.showCalculateDialog();
-        });
+        const btnCalculate = document.getElementById('btn-calculate');
+        if (btnCalculate) {
+            btnCalculate.addEventListener('click', () => {
+                this.showCalculateDialog();
+            });
+        }
 
         // Botón deshacer
-        document.getElementById('btn-undo').addEventListener('click', () => {
-            this.processor.undo();
-            this.renderTable();
-            this.renderOperations();
-        });
-
-        // Botón reset
-        document.getElementById('btn-reset').addEventListener('click', () => {
-            if (confirm('¿Resetear todos los cambios?')) {
-                this.processor.reset();
-                this.currentPage = 1;
+        const btnUndo = document.getElementById('btn-undo');
+        if (btnUndo) {
+            btnUndo.addEventListener('click', () => {
+                this.processor.undo();
                 this.renderTable();
                 this.renderOperations();
-            }
-        });
+            });
+        }
+
+        // Botón reset
+        const btnReset = document.getElementById('btn-reset');
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                console.log('Reset button clicked');
+                if (confirm('¿Resetear todos los cambios?')) {
+                    console.log('User confirmed reset');
+                    this.processor.reset();
+                    this.currentPage = 1;
+                    this.sortColumn = null;
+                    this.sortOrder = 'asc';
+                    this.renderTable();
+                    this.renderOperations();
+                    if (typeof frappe !== 'undefined' && frappe.show_alert) {
+                        frappe.show_alert({message: 'Datos reseteados correctamente', indicator: 'green'});
+                    }
+                }
+            });
+        } else {
+            console.error('btn-reset not found!');
+        }
 
         // Botón exportar
-        document.getElementById('btn-export').addEventListener('click', () => {
-            this.exportJSON();
-        });
+        const btnExport = document.getElementById('btn-export');
+        if (btnExport) {
+            btnExport.addEventListener('click', () => {
+                this.exportJSON();
+            });
+        }
     }
 
     // Muestra diálogo para añadir filtro
-    showFilterDialog() {
-        const columns = this.processor.columns.map(c => c.name);
+    showFilterDialogForColumn(columnName) {
+        this.showFilterDialog(columnName);
+    }
+
+    showFilterDialog(preselectedColumn) {
+        if (!preselectedColumn) {
+            frappe.msgprint('Por favor, selecciona una columna desde el menú de columnas');
+            return;
+        }
         
         const dialog = new frappe.ui.Dialog({
-            title: 'Añadir Filtro',
+            title: `Filtrar: ${preselectedColumn}`,
             fields: [
                 {
-                    fieldtype: 'Select',
-                    fieldname: 'column',
-                    label: 'Columna',
-                    options: columns,
-                    reqd: 1
+                    fieldtype: 'HTML',
+                    fieldname: 'column_info',
+                    options: `<div style="padding: 10px; background-color: #f0f4f7; border-radius: 4px; margin-bottom: 10px;">
+                        <strong>Columna:</strong> <span style="color: #2490ef;">${preselectedColumn}</span>
+                    </div>`
                 },
                 {
                     fieldtype: 'Select',
@@ -462,7 +692,7 @@ class DataTableUI {
             ],
             primary_action_label: 'Aplicar Filtro',
             primary_action: (values) => {
-                this.processor.applyFilter(values.column, values.operator, values.value || '');
+                this.processor.applyFilter(preselectedColumn, values.operator, values.value || '');
                 this.currentPage = 1;
                 this.renderTable();
                 this.renderOperations();
@@ -475,14 +705,24 @@ class DataTableUI {
     }
 
     // Muestra diálogo para agrupar datos
-    showGroupByDialog() {
+    showGroupByDialogForColumn(columnName) {
+        this.showGroupByDialog(columnName);
+    }
+
+    showGroupByDialog(preselectedColumn = null) {
         const columns = this.processor.columns;
         const numericColumns = columns.filter(c => c.type === 'number').map(c => c.name);
         
         const dialog = new frappe.ui.Dialog({
-            title: 'Agrupar Datos',
+            title: preselectedColumn ? `Agrupar por: ${preselectedColumn}` : 'Agrupar Datos',
             fields: [
-                {
+                preselectedColumn ? {
+                    fieldtype: 'HTML',
+                    fieldname: 'group_column_info',
+                    options: `<div style="padding: 10px; background-color: #f0f4f7; border-radius: 4px; margin-bottom: 10px;">
+                        <strong>Agrupar por:</strong> <span style="color: #2490ef;">${preselectedColumn}</span>
+                    </div>`
+                } : {
                     fieldtype: 'Select',
                     fieldname: 'group_column',
                     label: 'Agrupar por',
@@ -509,7 +749,10 @@ class DataTableUI {
                 const aggregations = {};
                 aggregations[values.agg_column] = values.agg_function;
                 
-                this.processor.groupBy(values.group_column, aggregations);
+                // Usar columna preseleccionada o la seleccionada en el formulario
+                const groupColumn = preselectedColumn || values.group_column;
+                
+                this.processor.groupBy(groupColumn, aggregations);
                 this.currentPage = 1;
                 this.renderTable();
                 this.renderOperations();
@@ -525,6 +768,20 @@ class DataTableUI {
     showCalculateDialog() {
         const columns = this.processor.columns.map(c => c.name);
         
+        // Generar ejemplos con columnas reales
+        let ejemplos = 'Ejemplos:<br>';
+        if (columns.includes('ventas') && columns.includes('cantidad')) {
+            ejemplos += '• ventas * cantidad (Total)<br>';
+        }
+        if (columns.includes('ventas') && columns.includes('costo')) {
+            ejemplos += '• ventas - costo (Ganancia)<br>';
+            ejemplos += '• costo * 0.16 (IVA)<br>';
+        }
+        if (columns.includes('precio') && columns.includes('stock')) {
+            ejemplos += '• precio * stock (Valor inventario)<br>';
+        }
+        ejemplos += `<br><strong>Columnas disponibles:</strong> ${columns.join(', ')}`;
+        
         const dialog = new frappe.ui.Dialog({
             title: 'Calcular Columna',
             fields: [
@@ -538,7 +795,7 @@ class DataTableUI {
                     fieldtype: 'Small Text',
                     fieldname: 'formula',
                     label: 'Fórmula',
-                    description: `Ejemplo: columna1 + columna2 * 0.16<br>Columnas disponibles: ${columns.join(', ')}`,
+                    description: ejemplos,
                     reqd: 1
                 }
             ],
