@@ -74,6 +74,16 @@
 
           // Renderizar widgets existentes
           layout.forEach((widget) => {
+            // Evitar renderizar widgets que ya se renderizaron inmediatamente
+            const renderedIds = window.DragDropWidgets.renderedWidgetIds || {};
+            if (renderedIds[widget.id]) {
+              console.log(
+                `⏭️  Widget ${widget.id} ya renderizado, saltando...`,
+              );
+              State.addWidget(widget);
+              return;
+            }
+
             if (widget.type === "echart") {
               // Renderizar EChart
               Widgets.renderEChartWidget(widget);
@@ -88,6 +98,9 @@
 
           // Renderizar sidebar
           Widgets.renderAvailableWidgets();
+
+          // Inicializar eventos de configuración de widgets
+          Widgets.initializeConfigEvents();
 
           console.log("✅ Sistema Drag and Drop inicializado correctamente");
         } else {

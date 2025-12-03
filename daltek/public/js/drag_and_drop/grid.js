@@ -15,7 +15,7 @@
       {
         column: 12,
         cellHeight: 40,
-        verticalMargin: 10,
+        margin: 10,
         disableOneColumnMode: false,
         oneColumnModeDomSort: true,
         disableResize: false,
@@ -91,7 +91,11 @@
     node.setAttribute("gs-w", 2);
     node.setAttribute("gs-h", 4);
 
-    grid.addWidget(node, { x: position.x, y: position.y, w: 2, h: 4 });
+    // Usar makeWidget() en lugar de addWidget() (GridStack v11+)
+    grid.makeWidget(node);
+
+    // Actualizar posición
+    grid.update(node, { x: position.x, y: position.y, w: 2, h: 4 });
 
     State.addWidget({
       id: id,
@@ -131,7 +135,11 @@
     node.setAttribute("gs-w", widget.position.width || 2);
     node.setAttribute("gs-h", widget.position.height || 4);
 
-    grid.addWidget(node, {
+    // Usar makeWidget() en lugar de addWidget() (GridStack v11+)
+    grid.makeWidget(node);
+
+    // Actualizar posición
+    grid.update(node, {
       x: widget.position.col || widget.position.x || 0,
       y: widget.position.row || widget.position.y || 0,
       w: widget.position.width || 2,

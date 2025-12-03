@@ -6,11 +6,11 @@ frappe.ui.form.on("Daltek", {
       // Cargar widgets y scripts del drag and drop
       frappe.require(
         [
-          "/assets/daltek/js/widgets.js",
+          "/assets/daltek/js/drag_and_drop/widgets.js",
           "/assets/daltek/js/drag_and_drop/state.js",
           "/assets/daltek/js/drag_and_drop/ui.js",
           "/assets/daltek/js/drag_and_drop/grid.js",
-          "/assets/daltek/js/drag_and_drop/widgets.js",
+          "/assets/daltek/js/drag_and_drop/drag_drop_handlers.js",
           "/assets/daltek/js/drag_and_drop/main.js",
         ],
         function () {

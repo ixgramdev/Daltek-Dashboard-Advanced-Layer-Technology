@@ -32,99 +32,8 @@ class Daltek(Document):
 
 
 # --- MÉTODOS DEL DOCTYPE ---
-# Los métodos CRUD de queries se encuentran en QueryService
+# Los métodos CRUD de los services se encuentran en sus respectivas carpetas
 # Solo mantener aquí métodos relacionados con el UI del DocType
-
-
-@frappe.whitelist()
-def get_doctype_fields(doctype_name):
-    try:
-        if not doctype_name:
-            frappe.throw("El nombre del DocType es requerido")
-
-        # Verificar que el DocType existe
-        if not frappe.db.exists("DocType", doctype_name):
-            frappe.throw(f"El DocType '{doctype_name}' no existe")
-
-        # Obtener metadatos del DocType
-        meta = frappe.get_meta(doctype_name)
-
-        doctype_doc = frappe.get_doc("DocType", doctype_name)
-        is_custom = getattr(doctype_doc, "custom", 0) == 1
-
-        standard_fields = [
-            {"fieldname": "name", "label": "ID", "fieldtype": "Data"},
-            {
-                "fieldname": "creation",
-                "label": "Fecha Creación",
-                "fieldtype": "Datetime",
-            },
-            {
-                "fieldname": "modified",
-                "label": "Fecha Modificación",
-                "fieldtype": "Datetime",
-            },
-            {
-                "fieldname": "modified_by",
-                "label": "Modificado Por",
-                "fieldtype": "Data",
-            },
-            {"fieldname": "owner", "label": "Propietario", "fieldtype": "Data"},
-        ]
-
-        custom_fields = []
-        for field in meta.fields:
-            if (
-                field.fieldname
-                and not field.hidden
-                and field.fieldtype
-                in [
-                    "Data",
-                    "Select",
-                    "Link",
-                    "Int",
-                    "Float",
-                    "Currency",
-                    "Date",
-                    "Datetime",
-                    "Check",
-                    "Text",
-                    "Small Text",
-                    "Long Text",
-                    "MultiSelect",
-                    "Child Table",
-                ]
-            ):
-                custom_fields.append(
-                    {
-                        "fieldname": field.fieldname,
-                        "label": field.label or field.fieldname,
-                        "fieldtype": field.fieldtype,
-                        "options": field.options or "",
-                    }
-                )
-
-        return {
-            "success": True,
-            "doctype": doctype_name,
-            "table_name": f"tab{doctype_name.replace(' ', '')}",
-            "is_custom": is_custom,
-            "standard_fields": standard_fields,
-            "custom_fields": custom_fields,
-            "all_fields": standard_fields + custom_fields,
-        }
-
-    except Exception as e:
-        frappe.log_error(
-            f"Error obteniendo campos del DocType {doctype_name}: {str(e)}",
-            "QueryBuilder Error",
-        )
-        return {
-            "success": False,
-            "error": str(e),
-            "doctype": doctype_name,
-            "message": f"Error obteniendo campos del DocType: {str(e)}",
-        }
 
 
 @frappe.whitelist()
@@ -214,6 +123,8 @@ def get_drag_drop_html():
             ("ui.js", "js"),
             ("grid.js", "js"),
             ("widgets.js", "js"),
+            ("drag_drop_handlers.js", "js"),
+            ("widget_config.js", "js"),
             ("main.js", "js"),
         ]
 
@@ -241,6 +152,8 @@ def get_drag_drop_html():
             "ui.js": "dd-ui-js",
             "grid.js": "dd-grid-js",
             "widgets.js": "dd-widgets-js",
+            "drag_drop_handlers.js": "dd-drag-drop-handlers-js",
+            "widget_config.js": "dd-widget-config-js",
             "main.js": "dd-main-js",
         }
 
@@ -265,8 +178,7 @@ def get_drag_drop_html():
         return f"<div style='{error_style}'>{error_msg}</div>"
 
 
-# --- MÉTODOS PARA QUERY SERVICE ---
-# Métodos wrapper que conectan el cliente con QueryService
+# --- QUERY SERVICE ---
 
 
 @frappe.whitelist()
@@ -421,7 +333,99 @@ def update_query_field(doc_name, query_id, field_name, field_value):
         return {"success": False, "error": str(e)}
 
 
-# --- Metodos de WidgetService ---
+# Obtener solo los tipos de campos específicos a seleccionar para la query
+@frappe.whitelist()
+def get_doctype_fields(doctype_name):
+    try:
+        if not doctype_name:
+            frappe.throw("El nombre del DocType es requerido")
+
+        # Verificar que el DocType existe
+        if not frappe.db.exists("DocType", doctype_name):
+            frappe.throw(f"El DocType '{doctype_name}' no existe")
+
+        # Obtener metadatos del DocType
+        meta = frappe.get_meta(doctype_name)
+
+        doctype_doc = frappe.get_doc("DocType", doctype_name)
+        is_custom = getattr(doctype_doc, "custom", 0) == 1
+
+        standard_fields = [
+            {"fieldname": "name", "label": "ID", "fieldtype": "Data"},
+            {
+                "fieldname": "creation",
+                "label": "Fecha Creación",
+                "fieldtype": "Datetime",
+            },
+            {
+                "fieldname": "modified",
+                "label": "Fecha Modificación",
+                "fieldtype": "Datetime",
+            },
+            {
+                "fieldname": "modified_by",
+                "label": "Modificado Por",
+                "fieldtype": "Data",
+            },
+            {"fieldname": "owner", "label": "Propietario", "fieldtype": "Data"},
+        ]
+
+        custom_fields = []
+        for field in meta.fields:
+            if (
+                field.fieldname
+                and not field.hidden
+                and field.fieldtype
+                in [
+                    "Data",
+                    "Select",
+                    "Link",
+                    "Int",
+                    "Float",
+                    "Currency",
+                    "Date",
+                    "Datetime",
+                    "Check",
+                    "Text",
+                    "Small Text",
+                    "Long Text",
+                    "MultiSelect",
+                    "Child Table",
+                ]
+            ):
+                custom_fields.append(
+                    {
+                        "fieldname": field.fieldname,
+                        "label": field.label or field.fieldname,
+                        "fieldtype": field.fieldtype,
+                        "options": field.options or "",
+                    }
+                )
+
+        return {
+            "success": True,
+            "doctype": doctype_name,
+            "table_name": f"tab{doctype_name.replace(' ', '')}",
+            "is_custom": is_custom,
+            "standard_fields": standard_fields,
+            "custom_fields": custom_fields,
+            "all_fields": standard_fields + custom_fields,
+        }
+
+    except Exception as e:
+        frappe.log_error(
+            f"Error obteniendo campos del DocType {doctype_name}: {str(e)}",
+            "QueryBuilder Error",
+        )
+        return {
+            "success": False,
+            "error": str(e),
+            "doctype": doctype_name,
+            "message": f"Error obteniendo campos del DocType: {str(e)}",
+        }
+
+
+# --- WIDGET SERVICE ---
 
 
 @frappe.whitelist()
@@ -452,73 +456,15 @@ def get_layout(doc_name):
         return {"success": False, "error": str(e)}
 
 
-# ==================== WRAPPERS PARA ECHARTS ====================
-
-
-@frappe.whitelist()
-def add_widget_echart(
-    doc_name, chart_type, chart_data, chart_config=None, widget_properties=None
-):
-    """
-    Wrapper para crear widgets EChart desde el frontend.
-    Llama a WidgetService.add_echart() y retorna resultado.
-
-    Args:
-        doc_name: Nombre del documento Daltek
-        chart_type: Tipo de chart ("line", "bar", "pie", "scatter")
-        chart_data: Datos del chart (dict o JSON string)
-        chart_config: Configuración visual (dict o JSON string)
-        widget_properties: Propiedades del widget (dict o JSON string)
-
-    Returns:
-        Dict con success, widget creado y layout actualizado
-    """
-    try:
-        import json
-
-        # Parsear strings a dicts si es necesario
-        if isinstance(chart_data, str):
-            chart_data = json.loads(chart_data)
-        if isinstance(chart_config, str):
-            chart_config = json.loads(chart_config)
-        if isinstance(widget_properties, str):
-            widget_properties = json.loads(widget_properties)
-
-        # Llamar al servicio
-        service = WidgetService()
-        result = service.add_echart(
-            doc_name=doc_name,
-            chart_type=chart_type,
-            chart_data=chart_data,
-            chart_config=chart_config or {},
-            widget_properties=widget_properties or {},
-        )
-
-        return result
-
-    except Exception as e:
-        frappe.log_error(
-            f"Error en add_widget_echart(): {str(e)}", "EChart Widget Wrapper Error"
-        )
-        return {"success": False, "error": str(e)}
+# ==================== WIDGET ENDPOINTS ====================
 
 
 @frappe.whitelist()
 def add_widget(doc_name, widget):
     """
-    Wrapper genérico para widgets tradicionales (card, table, etc).
-    Llama a WidgetService.add().
+    Endpoint único para agregar cualquier tipo de widget.
+    Delega la lógica específica a WidgetService.add()
     """
-    try:
-        import json
-
-        if isinstance(widget, str):
-            widget = json.loads(widget)
-
-        service = WidgetService()
-        result = service.add(doc_name, widget)
-        return result
-
-    except Exception as e:
-        frappe.log_error(f"Error en add_widget(): {str(e)}", "Widget Wrapper Error")
-        return {"success": False, "error": str(e)}
+    service = WidgetService()
+    result = service.add(doc_name, widget)
+    return result
