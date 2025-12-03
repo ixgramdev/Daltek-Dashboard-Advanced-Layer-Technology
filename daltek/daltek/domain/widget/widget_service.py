@@ -3,8 +3,11 @@ from typing import Any
 
 import frappe
 
+from ...dtos.echart_widget_dto import EChartWidgetDTO
+from ...dtos.widget_dto import WidgetDTO
 from .echart.echart_factory import EChartFactory
 from .echart.echart_transforrmer import EChartTransformer
+from .widget_repository import WidgetRepository
 from .widget_validator import WidgetValidator
 
 
@@ -18,6 +21,7 @@ class WidgetService:
         self.validator = WidgetValidator()
         self.echart_factory = EChartFactory
         self.echart_transformer = EChartTransformer()
+        self.repository = WidgetRepository()
 
     # --- CRUD OPERATIONS ---
 
@@ -34,13 +38,11 @@ class WidgetService:
             Dict con success, layout y widgets renderizados
         """
         try:
-            if not frappe.db.exists("Daltek", doc_name):
-                return {
-                    "success": False,
-                    "error": f"Documento Daltek '{doc_name}' no existe",
-                }
-
-            layout = self.get_layout(doc_name)
+            # Obtiene el layout desde el repositorio; si el doc no existe, lanza error
+            try:
+                layout = self.repository.get_layout(doc_name)
+            except ValueError as e:
+                return {"success": False, "error": str(e)}
 
             if not layout:
                 return {
@@ -78,13 +80,7 @@ class WidgetService:
             Lista de widgets o lista vacía si no existe layout
         """
         try:
-            if not frappe.db.exists("Daltek", doc_name):
-                frappe.throw(f"Documento Daltek '{doc_name}' no existe")
-
-            doc = frappe.get_doc("Daltek", doc_name)
-            layout = self._parse_layout(doc.layout)
-
-            return layout
+            return self.repository.get_layout(doc_name)
 
         except Exception as e:
             frappe.log_error(f"Error en get_layout(): {str(e)}", "WidgetService Error")
@@ -103,61 +99,67 @@ class WidgetService:
             Dict con success, message y layout actualizado
         """
         try:
-            if not frappe.db.exists("Daltek", doc_name):
-                return {
-                    "success": False,
-                    "error": f"Documento Daltek '{doc_name}' no existe",
-                }
-
             # Parsear widget si es string
             widget_data = json.loads(widget) if isinstance(widget, str) else widget
 
-            # Validar widget
-            validation = self.validator.validate_widget(widget_data)
+            # Determinar si es un widget EChart para escoger DTO adecuado
+            widget_type = widget_data.get("type")
+
+            if widget_type == "echart" or widget_data.get("chart_type"):
+                dto = EChartWidgetDTO.from_dict(widget_data)
+            else:
+                dto = WidgetDTO.from_dict(widget_data)
+
+            # Validar DTO a nivel de dominio
+            is_valid, errors = dto.validate()
+            if not is_valid:
+                return {
+                    "success": False,
+                    "error": "; ".join(errors) or "Widget inválido",
+                }
+
+            # Validar widget con el validador existente (reglas adicionales)
+            validation = self.validator.validate_widget(dto.to_dict())
             if not validation.get("valid"):
                 return {
                     "success": False,
                     "error": validation.get("error", "Widget inválido"),
                 }
 
-            # Obtener layout actual
-            layout = self.get_layout(doc_name)
+            # Obtener layout actual desde el repositorio
+            layout = self.repository.get_layout(doc_name)
 
             # Asignar ID único si no tiene
-            if not widget_data.get("id"):
-                widget_data["id"] = self._generate_widget_id(layout)
+            if not dto.id:
+                dto.id = self._generate_widget_id(layout)
 
             # Añadir metadata
-            widget_data["created_at"] = frappe.utils.now_datetime().isoformat()
-            widget_data["modified_at"] = frappe.utils.now_datetime().isoformat()
+            now_iso = frappe.utils.now_datetime().isoformat()
+            if not dto.created_at:
+                dto.created_at = now_iso
+            dto.modified_at = now_iso
 
             # Si es un chart de EChart, procesarlo
-            if widget_data.get("type") in self.echart_factory.get_available_types():
-                echart_result = self._build_echart(widget_data)
+            dto_dict = dto.to_dict()
+
+            if dto_dict.get("type") in self.echart_factory.get_available_types():
+                echart_result = self._build_echart(dto_dict)
                 if not echart_result.get("success"):
                     return {
                         "success": False,
                         "error": f"Error construyendo EChart: {echart_result.get('error')}",
                     }
                 # Almacenar configuración del EChart
-                widget_data["echart_config"] = echart_result.get("config")
+                dto_dict["echart_config"] = echart_result.get("config")
 
-            # Agregar widget a layout
-            layout.append(widget_data)
-
-            # Guardar en BD
-            frappe.db.set_value(
-                "Daltek",
-                doc_name,
-                "layout",
-                json.dumps(layout, ensure_ascii=False, indent=2),
-            )
-            frappe.db.commit()
+            # Agregar widget a layout y persistir mediante el repositorio
+            layout.append(dto_dict)
+            self.repository.save_layout(doc_name, layout)
 
             return {
                 "success": True,
-                "message": f"Widget '{widget_data.get('id')}' añadido correctamente",
-                "widget": widget_data,
+                "message": f"Widget '{dto_dict.get('id')}' añadido correctamente",
+                "widget": dto_dict,
                 "layout": layout,
             }
 

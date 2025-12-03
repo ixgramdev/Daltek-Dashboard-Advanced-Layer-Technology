@@ -6,8 +6,8 @@ import os
 import frappe
 from frappe.model.document import Document
 
-from ...domain.query_service.query_service import QueryService
-from ...domain.widget_service.widget_service import WidgetService
+from ...domain.query.query_service import QueryService
+from ...domain.widget.widget_service import WidgetService
 
 
 class Daltek(Document):
