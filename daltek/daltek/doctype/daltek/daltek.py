@@ -11,9 +11,9 @@ from ...domain.widget.widget_service import WidgetService
 
 
 class Daltek(Document):
+
     def before_save(self):
         current_datetime = frappe.utils.now()
-
         if not self.dashboard_owner:
             self.dashboard_owner = frappe.session.user
 
@@ -21,6 +21,8 @@ class Daltek(Document):
             self.date_created = current_datetime
 
         self.last_modified = current_datetime
+
+        print("Guardando Daltek:", self.dashboard_name)
 
     def validate(self):
         # Validar que los datos sean fechas y el usuario exista dentro del sistema

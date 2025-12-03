@@ -17,7 +17,7 @@ function show_daltek_creation_dialog(listview) {
   frappe.prompt(
     [
       {
-        fieldname: "name1",
+        fieldname: "dashboard_name",
         fieldtype: "Data",
         label: __("Dashboard Name"),
         reqd: 1,
@@ -30,7 +30,7 @@ function show_daltek_creation_dialog(listview) {
         args: {
           doc: {
             doctype: "Daltek",
-            name1: values.name1,
+            dashboard_name: values.dashboard_name,
             dashboard_owner: frappe.session.user,
           },
         },
@@ -43,7 +43,7 @@ function show_daltek_creation_dialog(listview) {
             frappe.set_route("Form", "Daltek", r.message.name);
             frappe.show_alert({
               message: __("Dashboard '{0}' created successfully", [
-                values.name1,
+                values.dashboard_name,
               ]),
               indicator: "green",
             });
