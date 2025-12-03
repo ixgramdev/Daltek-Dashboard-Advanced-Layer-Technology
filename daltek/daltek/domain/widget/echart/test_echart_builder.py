@@ -11,7 +11,7 @@ Valida:
 import unittest
 
 from .base_echart_builder import BaseEChartBuilder
-from .echart_builders import (
+from .echart_builder import (
     BarChartBuilder,
     LineChartBuilder,
     PieChartBuilder,
