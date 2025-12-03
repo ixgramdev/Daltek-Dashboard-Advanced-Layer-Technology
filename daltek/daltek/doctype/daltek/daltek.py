@@ -14,6 +14,9 @@ class Daltek(Document):
     def before_save(self):
         current_datetime = frappe.utils.now()
 
+        if not self.dashboard_owner:
+            self.dashboard_owner = frappe.session.user
+
         if not self.date_created:
             self.date_created = current_datetime
 
