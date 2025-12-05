@@ -160,14 +160,14 @@
 
       <div class="widget-config-footer">
         <button class="widget-config-btn widget-config-delete" type="button">
-          🗑️ Eliminar
+           Eliminar
         </button>
         <div class="widget-config-actions">
           <button class="widget-config-btn widget-config-cancel" type="button">
             Cancelar
           </button>
           <button class="widget-config-btn widget-config-save" type="button">
-            💾 Guardar
+             Guardar
           </button>
         </div>
       </div>

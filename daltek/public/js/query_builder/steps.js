@@ -103,7 +103,7 @@
     });
   };
 
-  //  NUEVA FUNCIÓN: Seleccionar un DocType
+  // NUEVA FUNCIÓN: Seleccionar un DocType
   function selectDoctype(item, searchInput, dropdown) {
     searchInput.value = item.textContent;
     searchInput.dataset.value = item.dataset.value;
@@ -114,7 +114,7 @@
     window.QueryBuilderSteps.handleTableChange();
   }
 
-  //  NUEVA FUNCIÓN: Poblar el dropdown de campos con grupos por tipo
+  // NUEVA FUNCIÓN: Poblar el dropdown de campos con grupos por tipo
   window.QueryBuilderSteps.populateFieldsDropdown = function (fields) {
     const fieldsDropdown = dom.fieldsDropdown;
 
@@ -168,7 +168,7 @@
     );
   };
 
-  //  NUEVA FUNCIÓN: Seleccionar un campo
+  // NUEVA FUNCIÓN: Seleccionar un campo
   function selectField(item) {
     const fieldsSearch = dom.fieldsSearch;
     const fieldsDropdown = dom.fieldsDropdown;
@@ -181,7 +181,7 @@
     fieldsDropdown.style.display = "none";
   }
 
-  //  FUNCIÓN MODIFICADA: Manejar cambio de tabla
+  // FUNCIÓN MODIFICADA: Manejar cambio de tabla
   window.QueryBuilderSteps.handleTableChange = function () {
     const state = getState();
     const searchInput = document.getElementById("search");
@@ -324,7 +324,7 @@
 
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove";
-    removeBtn.textContent = "🗑";
+    removeBtn.textContent = "";
     removeBtn.addEventListener("click", () => {
       row.remove();
       window.QueryBuilderSteps.updateFiltersState();

@@ -14,7 +14,7 @@ frappe.ui.form.on("Daltek", {
           "/assets/daltek/js/drag_and_drop/main.js",
         ],
         function () {
-          console.log("✅ Todos los scripts cargados correctamente");
+          console.log(" Todos los scripts cargados correctamente");
           console.log("Widgets disponibles:", availableWidgets);
           console.log("Sistema Drag and Drop listo:", window.DragDropSystem);
           load_drag_drop_system(frm);
@@ -54,18 +54,6 @@ function toggle_tabs_visibility(frm) {
     "preview_tab",
   ];
 
-  tabs_to_toggle.forEach((tab_name) => {
-    frm.toggle_display(tab_name, should_show_tabs);
-
-    if (tab_name === "editable_menu_tab") {
-      frm.toggle_display("editable_menu_html", should_show_tabs);
-    } else if (tab_name === "query_builder_tab") {
-      frm.toggle_display("query_builder_html", should_show_tabs);
-    } else if (tab_name === "preview_tab") {
-      frm.toggle_display("drag_drop_html", should_show_tabs);
-      frm.toggle_display("preview", should_show_tabs);
-    }
-  });
 }
 
 function load_query_builder(frm) {
@@ -94,21 +82,21 @@ function load_drag_drop_system(frm) {
 
         setTimeout(function () {
           // Debug: verificar estado de los módulos
-          console.log("🔍 Estado de módulos Drag and Drop:");
+          console.log(" Estado de módulos Drag and Drop:");
           console.log(
-            "   - window.DragDropSystem:",
+            " - window.DragDropSystem:",
             typeof window.DragDropSystem,
           );
           console.log(
-            "   - window.initDragDropSystem:",
+            " - window.initDragDropSystem:",
             typeof window.initDragDropSystem,
           );
           console.log(
-            "   - window.availableWidgets:",
+            " - window.availableWidgets:",
             typeof window.availableWidgets,
           );
           console.log(
-            "   - availableWidgets (global):",
+            " - availableWidgets (global):",
             typeof availableWidgets,
           );
 
@@ -119,16 +107,16 @@ function load_drag_drop_system(frm) {
           ) {
             const widgets = window.availableWidgets || availableWidgets || [];
             console.log(
-              "✅ Inicializando sistema Drag and Drop con widgets:",
+              " Inicializando sistema Drag and Drop con widgets:",
               widgets,
             );
             window.initDragDropSystem(frm, widgets);
           } else {
             console.error(
-              "❌ Sistema Drag and Drop no disponible o widgets no cargados",
+              " Sistema Drag and Drop no disponible o widgets no cargados",
             );
             console.error(
-              "   Verificar que los scripts fueron cargados correctamente",
+              " Verificar que los scripts fueron cargados correctamente",
             );
           }
         }, 100);

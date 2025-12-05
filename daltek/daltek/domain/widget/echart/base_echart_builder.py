@@ -8,7 +8,6 @@ Utiliza el patrón Strategy para permitir diferentes estrategias de construcció
 from abc import ABC, abstractmethod
 from typing import Any
 
-
 class BaseEChartBuilder(ABC):
     """
     Clase abstracta que define el contrato para todos los builders de EChart.
@@ -222,14 +221,14 @@ class BaseEChartBuilder(ABC):
             Lista de colores en formato hex
         """
         return [
-            "#2196F3",  # Blue
-            "#4CAF50",  # Green
-            "#FF9800",  # Orange
-            "#F44336",  # Red
-            "#9C27B0",  # Purple
-            "#00BCD4",  # Cyan
-            "#FFEB3B",  # Yellow
-            "#795548",  # Brown
+            "#2196F3", # Blue
+            "#4CAF50", # Green
+            "#FF9800", # Orange
+            "#F44336", # Red
+            "#9C27B0", # Purple
+            "#00BCD4", # Cyan
+            "#FFEB3B", # Yellow
+            "#795548", # Brown
         ]
 
     def _normalize_series_name(self, name: str) -> str:

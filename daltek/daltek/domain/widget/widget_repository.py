@@ -2,7 +2,6 @@ import json
 
 import frappe
 
-
 class WidgetRepository:
     """Acceso a persistencia de widgets del DocType Daltek.
 
@@ -42,12 +41,12 @@ class WidgetRepository:
         try:
             layout = json.loads(raw_layout)
             frappe.logger().debug(
-                f"✅ Layout cargado para documento '{doc_name}': {len(layout)} widgets"
+                f" Layout cargado para documento '{doc_name}': {len(layout)} widgets"
             )
             return layout
         except Exception as e:
             frappe.log_error(
-                f"❌ No se pudo parsear layout para documento '{doc_name}': {str(e)}",
+                f" No se pudo parsear layout para documento '{doc_name}': {str(e)}",
                 "WidgetRepository Error",
             )
             return []
@@ -65,7 +64,7 @@ class WidgetRepository:
         """
 
         frappe.logger().debug(
-            f"💾 Guardando layout para documento '{doc_name}': {len(layout)} widgets"
+            f" Guardando layout para documento '{doc_name}': {len(layout)} widgets"
         )
 
         # Usamos set_value para evitar cargar todo el doc cuando no es necesario
@@ -77,7 +76,7 @@ class WidgetRepository:
         )
         frappe.db.commit()
 
-        frappe.logger().debug(f"✅ Layout guardado para documento '{doc_name}'")
+        frappe.logger().debug(f" Layout guardado para documento '{doc_name}'")
 
         # Limpiar caché para asegurar que los datos son frescos
         # y no se mezclen layouts de diferentes documentos
@@ -86,4 +85,4 @@ class WidgetRepository:
         # Invalidar caché del documento
         frappe.clear_document_cache("Daltek", doc_name)
 
-        frappe.logger().debug(f"🔄 Caché limpiada para documento '{doc_name}'")
+        frappe.logger().debug(f" Caché limpiada para documento '{doc_name}'")

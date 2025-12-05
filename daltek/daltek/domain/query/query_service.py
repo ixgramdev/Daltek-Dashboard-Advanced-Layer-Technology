@@ -7,7 +7,6 @@ from .query_builder import QueryBuilder
 from .query_repository import QueryRepository
 from .query_validator import QueryValidator
 
-
 class QueryService:
     def __init__(self):
         self.repository = QueryRepository()

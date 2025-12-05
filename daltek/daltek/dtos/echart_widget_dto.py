@@ -23,7 +23,6 @@ from typing import Any
 
 from .widget_dto import WidgetDTO
 
-
 @dataclass
 class EChartWidgetDTO(WidgetDTO):
     """

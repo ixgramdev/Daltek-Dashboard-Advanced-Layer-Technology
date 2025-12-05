@@ -1,7 +1,6 @@
 import json
 from typing import Any
 
-
 class QueryBuilder:
 
     # Estructura del JSON
@@ -257,7 +256,6 @@ class QueryBuilder:
     def get_sql(self) -> str:
         """Alias para build(), retorna la sentencia SQL."""
         return self.build()
-
 
 # ============================================================================
 # EJEMPLO DE USO

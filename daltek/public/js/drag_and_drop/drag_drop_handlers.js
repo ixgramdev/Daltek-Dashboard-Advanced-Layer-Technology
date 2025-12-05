@@ -10,7 +10,7 @@
   const UI = window.DragDropUI;
   const Grid = window.DragDropGrid;
 
-  // 🔄 Función auxiliar para recargar el formulario
+  // Función auxiliar para recargar el formulario
   const reloadForm = function () {
     const frm = State.state.frm;
     if (frm) {
@@ -116,11 +116,11 @@
       widget.properties = widgetData.default_properties;
     }
 
-    // 📡 Llamar al endpoint único de WidgetService
+    // Llamar al endpoint único de WidgetService
     window.DragDropWidgets.createWidget(widget);
   };
 
-  // 📡 Crear widget mediante backend - Endpoint único
+  // Crear widget mediante backend - Endpoint único
   window.DragDropWidgets.createWidget = function (widget) {
     frappe.call({
       method: "daltek.daltek.doctype.daltek.daltek.add_widget",
@@ -134,9 +134,9 @@
         if (response.message && response.message.success) {
           const createdWidget = response.message.widget;
 
-          console.log("✅ Widget creado en backend:", createdWidget.id);
+          console.log(" Widget creado en backend:", createdWidget.id);
 
-          // ✅ Renderizar inmediatamente en el cliente
+          // Renderizar inmediatamente en el cliente
           if (createdWidget.type === "echart") {
             window.DragDropWidgets.renderEChartWidget(createdWidget);
           } else {
@@ -159,7 +159,7 @@
             3,
           );
 
-          // 🔄 Recargar el formulario para sincronizar con la DB
+          // Recargar el formulario para sincronizar con la DB
           reloadForm();
         } else {
           frappe.msgprint({
@@ -170,7 +170,7 @@
         }
       },
       error: function (err) {
-        console.error("❌ Error llamando al backend:", err);
+        console.error(" Error llamando al backend:", err);
         frappe.msgprint({
           title: __("Error de conexión"),
           message: __("No se pudo conectar con el servidor"),
@@ -180,15 +180,15 @@
     });
   };
 
-  // 🎨 Renderizar EChart en el canvas
+  // Renderizar EChart en el canvas
   window.DragDropWidgets.renderEChartWidget = function (widget) {
     const grid = State.state.grid;
     if (!grid) {
-      console.error("❌ Grid no inicializado");
+      console.error(" Grid no inicializado");
       return;
     }
 
-    console.log("🎨 Renderizando EChart:", widget);
+    console.log(" Renderizando EChart:", widget);
 
     // Crear nodo del DOM
     const node = document.createElement("div");
@@ -234,7 +234,7 @@
       h: position.height || 6,
     });
 
-    console.log("✅ Nodo agregado al grid, esperando DOM...");
+    console.log(" Nodo agregado al grid, esperando DOM...");
 
     // Esperar a que el DOM se actualice
     setTimeout(() => {
@@ -242,14 +242,14 @@
       const chartContainer = document.getElementById(`echart_${widget.id}`);
 
       console.log(
-        "🔍 Buscando contenedor:",
+        " Buscando contenedor:",
         `echart_${widget.id}`,
         chartContainer,
       );
 
       if (chartContainer && typeof echarts !== "undefined") {
         console.log(
-          "📊 Inicializando EChart con config:",
+          " Inicializando EChart con config:",
           widget.echart_config,
         );
 
@@ -263,30 +263,30 @@
         // Resize automático
         window.addEventListener("resize", () => chart.resize());
 
-        console.log(`✅ EChart renderizado exitosamente: ${widget.id}`);
+        console.log(` EChart renderizado exitosamente: ${widget.id}`);
       } else {
-        console.error("❌ No se pudo inicializar EChart:", widget.id);
-        console.error("   - Contenedor encontrado:", !!chartContainer);
+        console.error(" No se pudo inicializar EChart:", widget.id);
+        console.error(" - Contenedor encontrado:", !!chartContainer);
         console.error(
-          "   - ECharts disponible:",
+          " - ECharts disponible:",
           typeof echarts !== "undefined",
         );
         if (typeof echarts === "undefined") {
-          console.error("⚠️ ECharts.js no está cargado. Verifica hooks.py");
+          console.error(" ECharts.js no está cargado. Verifica hooks.py");
         }
       }
     }, 200);
   };
 
-  // 🎨 Renderizar widget genérico (card, table, etc.) en el canvas
+  // Renderizar widget genérico (card, table, etc.) en el canvas
   window.DragDropWidgets.renderGenericWidget = function (widget) {
     const grid = State.state.grid;
     if (!grid) {
-      console.error("❌ Grid no inicializado");
+      console.error(" Grid no inicializado");
       return;
     }
 
-    console.log("🎨 Renderizando widget genérico:", widget);
+    console.log(" Renderizando widget genérico:", widget);
 
     // Crear nodo del DOM
     const node = document.createElement("div");
@@ -332,7 +332,7 @@
       h: position.height || 4,
     });
 
-    console.log("✅ Widget genérico agregado al grid:", widget.id);
+    console.log(" Widget genérico agregado al grid:", widget.id);
   };
 
   // Renderizar la lista de widgets disponibles

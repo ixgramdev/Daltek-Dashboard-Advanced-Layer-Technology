@@ -9,7 +9,6 @@ from frappe.model.document import Document
 from ...domain.query.query_service import QueryService
 from ...domain.widget.widget_service import WidgetService
 
-
 class Daltek(Document):
 
     def before_save(self):
@@ -32,11 +31,9 @@ class Daltek(Document):
     def get_name(self):
         return self.name
 
-
 # --- MÉTODOS DEL DOCTYPE ---
 # Los métodos CRUD de los services se encuentran en sus respectivas carpetas
 # Solo mantener aquí métodos relacionados con el UI del DocType
-
 
 @frappe.whitelist()
 def get_query_builder_html():
@@ -106,7 +103,6 @@ def get_query_builder_html():
         frappe.log_error(error_msg)
         error_style = "padding: 20px" + "; " + "color: red"
         return f"<div style='{error_style}'>{error_msg}</div>"
-
 
 @frappe.whitelist()
 def get_drag_drop_html():
@@ -179,9 +175,7 @@ def get_drag_drop_html():
         error_style = "padding: 20px" + "; " + "color: red"
         return f"<div style='{error_style}'>{error_msg}</div>"
 
-
 # --- QUERY SERVICE ---
-
 
 @frappe.whitelist()
 def save_query(doc_name, query_data):
@@ -218,7 +212,6 @@ def save_query(doc_name, query_data):
         frappe.log_error(f"Error en save_query: {str(e)}", "QueryService Wrapper Error")
         return {"success": False, "error": str(e)}
 
-
 @frappe.whitelist()
 def edit_query(doc_name, query_id, query_data):
     """
@@ -240,7 +233,6 @@ def edit_query(doc_name, query_id, query_data):
     except Exception as e:
         frappe.log_error(f"Error en edit_query: {str(e)}", "QueryService Wrapper Error")
         return {"success": False, "error": str(e)}
-
 
 @frappe.whitelist()
 def delete_query(doc_name, query_id):
@@ -265,7 +257,6 @@ def delete_query(doc_name, query_id):
         )
         return {"success": False, "error": str(e)}
 
-
 @frappe.whitelist()
 def get_query(doc_name, query_id):
     try:
@@ -276,7 +267,6 @@ def get_query(doc_name, query_id):
     except Exception as e:
         frappe.log_error(f"Error en get_query: {str(e)}", "QueryService Wrapper Error")
         return {"success": False, "error": str(e)}
-
 
 @frappe.whitelist()
 def get_all_queries(doc_name):
@@ -292,7 +282,6 @@ def get_all_queries(doc_name):
         )
         return {"success": False, "error": str(e)}
 
-
 @frappe.whitelist()
 def execute_query(doc_name, query_id):
     # Ejecuta una consulta
@@ -306,7 +295,6 @@ def execute_query(doc_name, query_id):
             f"Error en execute_query: {str(e)}", "QueryService Wrapper Error"
         )
         return {"success": False, "error": str(e)}
-
 
 @frappe.whitelist()
 def update_query_field(doc_name, query_id, field_name, field_value):
@@ -333,7 +321,6 @@ def update_query_field(doc_name, query_id, field_name, field_value):
             f"Error en update_query_field: {str(e)}", "QueryService Wrapper Error"
         )
         return {"success": False, "error": str(e)}
-
 
 # Obtener solo los tipos de campos específicos a seleccionar para la query
 @frappe.whitelist()
@@ -426,9 +413,7 @@ def get_doctype_fields(doctype_name):
             "message": f"Error obteniendo campos del DocType: {str(e)}",
         }
 
-
 # --- WIDGET SERVICE ---
-
 
 @frappe.whitelist()
 def render_layout(doc_name):
@@ -443,7 +428,6 @@ def render_layout(doc_name):
         )
         return {"success": False, "error": str(e)}
 
-
 @frappe.whitelist()
 def get_layout(doc_name):
     try:
@@ -457,9 +441,7 @@ def get_layout(doc_name):
         )
         return {"success": False, "error": str(e)}
 
-
 # ==================== WIDGET ENDPOINTS ====================
-
 
 @frappe.whitelist()
 def add_widget(doc_name, widget):

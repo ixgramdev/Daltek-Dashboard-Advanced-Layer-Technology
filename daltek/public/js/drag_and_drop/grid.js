@@ -64,11 +64,11 @@
       return;
     }
 
-    // ⚠️ NO usar esta función para widgets tipo "echart"
+    // NO usar esta función para widgets tipo "echart"
     // Los ECharts se renderizan con DragDropWidgets.renderEChartWidget()
     if (widgetData.type === "echart") {
       console.warn(
-        "⚠️ No usar addWidget() para ECharts, usar renderEChartWidget()",
+        " No usar addWidget() para ECharts, usar renderEChartWidget()",
       );
       return;
     }
@@ -158,7 +158,7 @@
   // Renderizar widgets existentes en el grid (DEPRECATED - usar main.js)
   window.DragDropGrid.renderExistingWidgets = function () {
     console.warn(
-      "⚠️ renderExistingWidgets() está deprecated. Los widgets se cargan desde main.js",
+      " renderExistingWidgets() está deprecated. Los widgets se cargan desde main.js",
     );
     const grid = State.state.grid;
     const widgets = State.getWidgets();

@@ -36,6 +36,7 @@
   {
    "fieldname": "type",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Type"
   },
   {
@@ -56,6 +57,7 @@
   {
    "fieldname": "layout",
    "fieldtype": "JSON",
+   "hidden": 1,
    "label": "Layout"
   },
   {
@@ -98,6 +100,7 @@
   {
    "fieldname": "query_data_storage",
    "fieldtype": "JSON",
+   "hidden": 1,
    "label": "Query Data Storage"
   },
   {
@@ -116,7 +119,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-03 12:03:33.627389",
+ "modified": "2025-12-05 01:02:49.869742",
  "modified_by": "Administrator",
  "module": "Daltek",
  "name": "Daltek",

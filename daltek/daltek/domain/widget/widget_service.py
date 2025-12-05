@@ -10,7 +10,6 @@ from .echart.echart_transforrmer import EChartTransformer
 from .widget_repository import WidgetRepository
 from .widget_validator import WidgetValidator
 
-
 class WidgetService:
     """Servicio para gestionar widgets del dashboard Daltek."""
 

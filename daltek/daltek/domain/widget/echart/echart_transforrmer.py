@@ -12,7 +12,6 @@ from typing import Any
 
 import frappe
 
-
 class EChartTransformer:
     """
     Transforma la configuración almacenada de ECharts en datos listos para renderizar.
@@ -300,7 +299,7 @@ class EChartTransformer:
         for item in pie_data:
             value = item.get("value", 0)
             percentage = (value / total * 100) if total > 0 else 0
-            percentage_str = f"{percentage:.2f}%"  # noqa: E231
+            percentage_str = f"{percentage:.2f}%" # noqa: E231
             rows.append([item.get("name", ""), value, percentage_str])
 
         return {

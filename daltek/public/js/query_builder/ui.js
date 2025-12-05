@@ -45,7 +45,7 @@
     state.selectedCols.forEach((col) => {
       const chip = document.createElement("div");
       chip.className = "col-chip";
-      chip.innerHTML = `${col} <button data-col="${col}" style="border:none;background:transparent;color:var(--qb-muted);cursor:pointer">✕</button>`;
+      chip.innerHTML = `${col} <button data-col="${col}" style="border:none;background:transparent;color:var(--qb-muted);cursor:pointer"></button>`;
       chip.querySelector("button").addEventListener("click", () => {
         state.selectedCols = state.selectedCols.filter((x) => x !== col);
         window.QueryBuilderUI.renderSelectedCols();

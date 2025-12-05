@@ -249,5 +249,5 @@ doctype_list_js = {"Daltek": "public/js/daltek_name_prompter.js"}
 # export_python_type_annotations = True
 
 # default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
+# 	"Logging DocType Name": 30 # days to retain logs
 # }

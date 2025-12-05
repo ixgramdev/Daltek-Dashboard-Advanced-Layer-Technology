@@ -1,6 +1,5 @@
 from typing import Any
 
-
 class WidgetValidator:
     """
     Valida la estructura y datos de widgets en formato DTO.
@@ -30,7 +29,7 @@ class WidgetValidator:
         """
         errors = []
 
-        # 1️⃣ Validar campos base requeridos del DTO
+        # 1⃣ Validar campos base requeridos del DTO
         if not dto.id or not isinstance(dto.id, str):
             errors.append("Campo requerido: 'id' (debe ser string no vacío)")
 
@@ -40,28 +39,28 @@ class WidgetValidator:
         if errors:
             return {"valid": False, "error": "; ".join(errors)}
 
-        # 2️⃣ Validar tipo
+        # 2⃣ Validar tipo
         if dto.type not in self.SUPPORTED_TYPES:
             return {
                 "valid": False,
                 "error": f"Tipo no soportado: '{dto.type}'. Válidos: {', '.join(self.SUPPORTED_TYPES)}",
             }
 
-        # 3️⃣ Validar timestamps (created_at, modified_at)
+        # 3⃣ Validar timestamps (created_at, modified_at)
         errors.extend(self._validate_timestamps(dto))
 
-        # 4️⃣ Validar posición/layout
+        # 4⃣ Validar posición/layout
         errors.extend(self._validate_position(dto.position))
 
-        # 5️⃣ Validar properties
+        # 5⃣ Validar properties
         if dto.properties is not None and not isinstance(dto.properties, dict):
             errors.append("Properties debe ser un diccionario")
 
-        # 6️⃣ Validar label
+        # 6⃣ Validar label
         if dto.label is not None and not isinstance(dto.label, str):
             errors.append("Label debe ser string")
 
-        # 7️⃣ Validar según tipo específico
+        # 7⃣ Validar según tipo específico
         if dto.type == "echart":
             errors.extend(self._validate_echart_dto(dto))
 

@@ -19,7 +19,6 @@ from .echart_builder import (
 )
 from .echart_factory import EChartFactory
 
-
 class TestLineChartBuilder(unittest.TestCase):
     """Tests para LineChartBuilder"""
 
@@ -73,7 +72,7 @@ class TestLineChartBuilder(unittest.TestCase):
         """Debe rechazar si categorías no coinciden con datos"""
         data = {
             "series": [{"name": "Sales", "data": [100, 200, 150]}],
-            "categories": ["Jan", "Feb"],  # Solo 2, pero hay 3 datos
+            "categories": ["Jan", "Feb"], # Solo 2, pero hay 3 datos
         }
         result = self.builder.build(data, {})
 
@@ -87,8 +86,7 @@ class TestLineChartBuilder(unittest.TestCase):
         self.assertEqual(len(series), 2)
         self.assertEqual(series[0].get("type"), "line")
         self.assertEqual(series[0].get("name"), "Sales")
-        self.assertIn("areaStyle", series[0])  # Por fill_area=True
-
+        self.assertIn("areaStyle", series[0]) # Por fill_area=True
 
 class TestBarChartBuilder(unittest.TestCase):
     """Tests para BarChartBuilder"""
@@ -118,7 +116,6 @@ class TestBarChartBuilder(unittest.TestCase):
         self.assertIn("yAxis", config)
         self.assertEqual(config["xAxis"]["type"], "category")
         self.assertEqual(config["yAxis"]["type"], "value")
-
 
 class TestPieChartBuilder(unittest.TestCase):
     """Tests para PieChartBuilder"""
@@ -169,7 +166,6 @@ class TestPieChartBuilder(unittest.TestCase):
 
         self.assertFalse(result.get("success"))
 
-
 class TestScatterChartBuilder(unittest.TestCase):
     """Tests para ScatterChartBuilder"""
 
@@ -196,7 +192,7 @@ class TestScatterChartBuilder(unittest.TestCase):
         data = {
             "series": [
                 {"name": "Data", "data": [[10, 20], [15]]}
-            ]  # Último punto incompleto
+            ] # Último punto incompleto
         }
         result = self.builder.build(data, {})
 
@@ -208,7 +204,6 @@ class TestScatterChartBuilder(unittest.TestCase):
         result = self.builder.build(data, {})
 
         self.assertFalse(result.get("success"))
-
 
 class TestEChartFactory(unittest.TestCase):
     """Tests para EChartFactory"""
@@ -266,7 +261,6 @@ class TestEChartFactory(unittest.TestCase):
         self.assertTrue(EChartFactory.is_registered("bar"))
         self.assertFalse(EChartFactory.is_registered("invalid"))
 
-
 class TestBaseEChartBuilderUtils(unittest.TestCase):
     """Tests para métodos utilitarios del builder base"""
 
@@ -290,7 +284,7 @@ class TestBaseEChartBuilderUtils(unittest.TestCase):
 
     def test_normalize_series_name(self):
         """Debe normalizar nombres de series"""
-        self.assertEqual(self.builder._normalize_series_name("  Sales  "), "Sales")
+        self.assertEqual(self.builder._normalize_series_name(" Sales "), "Sales")
         self.assertEqual(self.builder._normalize_series_name(123), "123")
 
     def test_get_legend_data_from_series(self):
@@ -314,7 +308,6 @@ class TestBaseEChartBuilderUtils(unittest.TestCase):
         # Verificar que son colores hex
         for color in colors:
             self.assertTrue(color.startswith("#"))
-
 
 if __name__ == "__main__":
     unittest.main()
