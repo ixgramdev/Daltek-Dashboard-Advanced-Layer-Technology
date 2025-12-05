@@ -15,7 +15,7 @@
       {
         column: 12,
         cellHeight: 40,
-        verticalMargin: 10,
+        margin: 10,
         disableOneColumnMode: false,
         oneColumnModeDomSort: true,
         disableResize: false,
@@ -64,11 +64,11 @@
       return;
     }
 
-    // ⚠️ NO usar esta función para widgets tipo "echart"
+    // NO usar esta función para widgets tipo "echart"
     // Los ECharts se renderizan con DragDropWidgets.renderEChartWidget()
     if (widgetData.type === "echart") {
       console.warn(
-        "⚠️ No usar addWidget() para ECharts, usar renderEChartWidget()",
+        " No usar addWidget() para ECharts, usar renderEChartWidget()",
       );
       return;
     }
@@ -91,7 +91,11 @@
     node.setAttribute("gs-w", 2);
     node.setAttribute("gs-h", 4);
 
-    grid.addWidget(node, { x: position.x, y: position.y, w: 2, h: 4 });
+    // Usar makeWidget() en lugar de addWidget() (GridStack v11+)
+    grid.makeWidget(node);
+
+    // Actualizar posición
+    grid.update(node, { x: position.x, y: position.y, w: 2, h: 4 });
 
     State.addWidget({
       id: id,
@@ -131,7 +135,11 @@
     node.setAttribute("gs-w", widget.position.width || 2);
     node.setAttribute("gs-h", widget.position.height || 4);
 
-    grid.addWidget(node, {
+    // Usar makeWidget() en lugar de addWidget() (GridStack v11+)
+    grid.makeWidget(node);
+
+    // Actualizar posición
+    grid.update(node, {
       x: widget.position.col || widget.position.x || 0,
       y: widget.position.row || widget.position.y || 0,
       w: widget.position.width || 2,
@@ -150,7 +158,7 @@
   // Renderizar widgets existentes en el grid (DEPRECATED - usar main.js)
   window.DragDropGrid.renderExistingWidgets = function () {
     console.warn(
-      "⚠️ renderExistingWidgets() está deprecated. Los widgets se cargan desde main.js",
+      " renderExistingWidgets() está deprecated. Los widgets se cargan desde main.js",
     );
     const grid = State.state.grid;
     const widgets = State.getWidgets();

@@ -12,7 +12,6 @@ import unittest
 
 from .echart_transforrmer import EChartTransformer
 
-
 class TestEChartTransformer(unittest.TestCase):
     """Tests para EChartTransformer"""
 
@@ -62,7 +61,7 @@ class TestEChartTransformer(unittest.TestCase):
     def test_transform_config_with_colors(self):
         """Debe normalizar colores en configuración"""
         config = {
-            "color": ["#FF0000", "#00FF00", "0000FF"],  # El tercero sin #
+            "color": ["#FF0000", "#00FF00", "0000FF"], # El tercero sin #
             "series": [],
         }
         transformed = self.transformer.transform_config(config)
@@ -156,8 +155,8 @@ class TestEChartTransformer(unittest.TestCase):
         export_data = self.transformer.transform_data_for_export(scatter_widget)
 
         self.assertEqual(len(export_data["rows"]), 3)
-        self.assertEqual(export_data["rows"][0][1], 10)  # X del primer punto
-        self.assertEqual(export_data["rows"][0][2], 20)  # Y del primer punto
+        self.assertEqual(export_data["rows"][0][1], 10) # X del primer punto
+        self.assertEqual(export_data["rows"][0][2], 20) # Y del primer punto
 
     def test_transform_batch(self):
         """Debe transformar múltiples widgets"""
@@ -224,7 +223,6 @@ class TestEChartTransformer(unittest.TestCase):
         self.transformer.transform_config(config)
 
         self.assertEqual(config, original)
-
 
 if __name__ == "__main__":
     unittest.main()

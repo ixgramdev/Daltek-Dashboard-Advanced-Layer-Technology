@@ -1,18 +1,19 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:dashboard_name",
  "creation": "2025-10-14 23:42:55.247215",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "dashboard_settings_tab",
-  "name1",
+  "dashboard_name",
   "dashboard_owner",
+  "last_modified",
   "is_public",
   "column_break_inwv",
   "type",
   "date_created",
-  "last_modified",
   "editable_menu_tab",
   "drag_drop_html",
   "layout",
@@ -29,19 +30,13 @@
    "label": "Dashboard Settings"
   },
   {
-   "fieldname": "name1",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Name",
-   "reqd": 1
-  },
-  {
    "fieldname": "column_break_inwv",
    "fieldtype": "Column Break"
   },
   {
    "fieldname": "type",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Type"
   },
   {
@@ -81,6 +76,7 @@
    "in_list_view": 1,
    "label": "Owner",
    "options": "User",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -111,14 +107,23 @@
    "fieldname": "preview",
    "fieldtype": "HTML",
    "label": "Preview"
+  },
+  {
+   "fieldname": "dashboard_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1,
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-29 11:37:19.687432",
+ "modified": "2025-12-05 01:02:49.869742",
  "modified_by": "Administrator",
  "module": "Daltek",
  "name": "Daltek",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -136,6 +141,5 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
- "title_field": "name1"
+ "states": []
 }

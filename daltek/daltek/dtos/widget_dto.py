@@ -2,90 +2,135 @@
 DTO base para widgets genéricos.
 
 Define la estructura de datos para transferir información de widgets genéricos
-entre capas de la aplicación.
+entre capas de la aplicación en formato JSON normalizado ÚNICAMENTE.
+
+Formato:
+{
+    "id": "widget_1_xxx",
+    "type": "card",
+    "label": "Mi Widget",
+    "metadata": { "created_at": "...", "modified_at": "...", "version": 1 },
+    "layout": { "x": 0, "y": 0, "width": 6, "height": 4 },
+    "properties": { "title": "...", "color": "..." },
+    "content": { "type": "card", "value": 1000, ... }
+}
 """
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
-
 
 @dataclass
 class WidgetDTO:
     """
-    DTO base para widgets genéricos.
-
-    Contiene las propiedades comunes a todos los tipos de widgets.
+    DTO base para widgets genéricos en formato normalizado único.
 
     Attributes:
-        id: Identificador único del widget
-        type: Tipo de widget (e.g., 'card', 'echart', 'table')
+        type: Tipo de widget ('card', 'echart', 'table')
         properties: Propiedades genéricas del widget
+        id: Identificador único (generado por backend)
         created_at: Fecha de creación (ISO format)
-        modified_at: Fecha de última modificación (ISO format)git st
-        position: Posición del widget en el dashboard {'x': int, 'y': int}
+        modified_at: Fecha de última modificación (ISO format)
+        position: Posición {'x', 'y', 'width', 'height', 'min_width', 'min_height'}
+        label: Etiqueta legible del widget
     """
 
-    id: str
     type: str
     properties: dict[str, Any] = field(default_factory=dict)
+    id: str | None = None
     created_at: str | None = None
     modified_at: str | None = None
-    position: dict[str, int] = field(default_factory=lambda: {"x": 0, "y": 0})
+    position: dict[str, int] = field(
+        default_factory=lambda: {"x": 0, "y": 0, "width": 6, "height": 4}
+    )
+    label: str = ""
+
+    # Dimensiones mínimas por tipo de widget
+    MIN_DIMENSIONS = {
+        "card": {
+            "min_width": 4,
+            "min_height": 3,
+            "default_width": 6,
+            "default_height": 4,
+        },
+        "table": {
+            "min_width": 6,
+            "min_height": 4,
+            "default_width": 8,
+            "default_height": 6,
+        },
+        "metric": {
+            "min_width": 3,
+            "min_height": 3,
+            "default_width": 4,
+            "default_height": 3,
+        },
+    }
 
     def to_dict(self) -> dict[str, Any]:
         """
-        Convierte el DTO a diccionario.
+        Convierte a diccionario en formato normalizado (ÚNICO formato soportado).
 
         Returns:
-            Representación en diccionario del DTO
+            Dict con estructura: id, type, label, metadata, layout, properties, content
         """
-        return asdict(self)
+        now = datetime.utcnow().isoformat()
+
+        # Obtener dimensiones mínimas según tipo
+        min_dims = self.MIN_DIMENSIONS.get(self.type, {"min_width": 4, "min_height": 3})
+
+        # Asegurar que width y height cumplan con mínimos
+        width = max(self.position.get("width", 6), min_dims.get("default_width", 6))
+        height = max(self.position.get("height", 4), min_dims.get("default_height", 4))
+
+        return {
+            "id": self.id,
+            "type": self.type,
+            "label": self.label,
+            "metadata": {
+                "created_at": self.created_at or now,
+                "modified_at": self.modified_at or now,
+                "version": 1,
+            },
+            "layout": {
+                "x": self.position.get("x", 0),
+                "y": self.position.get("y", 0),
+                "width": width,
+                "height": height,
+                "min_width": min_dims.get("min_width", 4),
+                "min_height": min_dims.get("min_height", 3),
+            },
+            "properties": self.properties,
+            "content": {"type": self.type},
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "WidgetDTO":
         """
-        Crea una instancia del DTO desde un diccionario.
+        Crea instancia desde diccionario en formato normalizado.
 
         Args:
-            data: Diccionario con los datos del widget
+            data: Dict con estructura normalizada
 
         Returns:
             Instancia de WidgetDTO
-
-        Raises:
-            KeyError: Si faltan campos requeridos
         """
+        metadata = data.get("metadata", {})
+        layout = data.get("layout", {})
+
         return cls(
-            id=data.get("id", ""),
             type=data.get("type", ""),
             properties=data.get("properties", {}),
-            created_at=data.get("created_at"),
-            modified_at=data.get("modified_at"),
-            position=data.get("position", {"x": 0, "y": 0}),
+            id=data.get("id"),
+            created_at=metadata.get("created_at"),
+            modified_at=metadata.get("modified_at"),
+            position={
+                "x": layout.get("x", 0),
+                "y": layout.get("y", 0),
+                "width": layout.get("width", 6),
+                "height": layout.get("height", 4),
+                "min_width": layout.get("min_width", 4),
+                "min_height": layout.get("min_height", 3),
+            },
+            label=data.get("label", ""),
         )
-
-    def validate(self) -> tuple[bool, list[str]]:
-        """
-        Valida el DTO.
-
-        Returns:
-            Tupla (es_válido, lista_de_errores)
-        """
-        errors = []
-
-        if not self.id or not isinstance(self.id, str):
-            errors.append("ID debe ser un string no vacío")
-
-        if not self.type or not isinstance(self.type, str):
-            errors.append("Type debe ser un string no vacío")
-
-        if not isinstance(self.properties, dict):
-            errors.append("Properties debe ser un diccionario")
-
-        if not isinstance(self.position, dict):
-            errors.append("Position debe ser un diccionario")
-
-        if "x" not in self.position or "y" not in self.position:
-            errors.append("Position debe contener las claves 'x' e 'y'")
-
-        return len(errors) == 0, errors

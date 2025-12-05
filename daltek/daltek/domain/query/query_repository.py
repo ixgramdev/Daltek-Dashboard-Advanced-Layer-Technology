@@ -2,7 +2,6 @@ import json
 
 import frappe
 
-
 class QueryRepository:
     """Acceso a persistencia de queries del DocType Daltek.
 

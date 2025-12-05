@@ -1,255 +1,167 @@
-// Manejo de drag and drop de widgets desde el sidebar
-// Se ejecuta en el contexto del campo HTML de ERPNext
+// widgets.js - Definición de widgets disponibles con propiedades generales y específicas
+window.availableWidgets = [
+  // ========== WIDGETS TIPO ECHART ==========
+  {
+    // Propiedades generales
+    id: "line_chart_widget",
+    name: "Line Chart",
+    label: "Gráfico de Líneas - Muestra tendencias temporales",
+    type: "echart", // Tipo principal
 
-(function (window) {
-  "use strict";
+    // Propiedades específicas de EChart
+    chart_type: "line", // Subtipo para el backend
+    default_data: {
+      series: [
+        { name: "Ventas", data: [120, 200, 150, 180, 220] },
+        { name: "Gastos", data: [80, 120, 100, 140, 160] },
+      ],
+      categories: ["Ene", "Feb", "Mar", "Abr", "May"],
+    },
+    default_config: {
+      smooth: true,
+      fill_area: false,
+      colors: ["#2196F3", "#FF9800"],
+    },
 
-  window.DragDropWidgets = window.DragDropWidgets || {};
+    // Dimensiones recomendadas para visualización correcta
+    default_width: 8,
+    default_height: 6,
+    min_width: 6,
+    min_height: 4,
 
-  const State = window.DragDropState;
-  const UI = window.DragDropUI;
-  const Grid = window.DragDropGrid;
-
-  // Inicializar eventos de drag and drop para los widgets
-  window.DragDropWidgets.initializeDragEvents = function () {
-    const widgets = State.state.availableWidgets;
-
-    widgets.forEach((widget, index) => {
-      const widgetElement = UI.dom.widgetList.children[index];
-      if (!widgetElement) return;
-
-      widgetElement.addEventListener("mousedown", (e) => {
-        window.DragDropWidgets.handleDragStart(e, widget, widgetElement);
-      });
-    });
-  };
-
-  // Manejar inicio del drag
-  window.DragDropWidgets.handleDragStart = function (
-    event,
-    widgetData,
-    widgetElement,
-  ) {
-    event.preventDefault();
-
-    const ghost = UI.createDragGhost(widgetElement, event);
-
-    const onMouseMove = (moveEvent) => {
-      UI.updateGhostPosition(ghost, moveEvent);
-    };
-
-    const onMouseUp = (upEvent) => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-      UI.removeGhost(ghost);
-
-      if (UI.isOverCanvas(upEvent)) {
-        window.DragDropWidgets.handleDrop(upEvent, widgetData);
-      }
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  };
-
-  // Manejar drop del widget en el canvas
-  window.DragDropWidgets.handleDrop = function (event, widgetTemplate) {
-    const grid = State.state.grid;
-    if (!grid) {
-      console.error("Grid no disponible");
-      return;
-    }
-
-    const position = UI.calculateGridPosition(event, grid);
-
-    // Crear widget base con propiedades generales
-    const widget = {
-      id: `${widgetTemplate.id}_${Date.now()}`, // ID único
-      name: widgetTemplate.name,
-      label: widgetTemplate.label,
-      type: widgetTemplate.type,
-      position: position,
-      created_at: new Date().toISOString(),
-    };
-
-    // 🔍 DETECTAR SI ES ECHART → Llamar al backend
-    if (widgetTemplate.type === "echart") {
-      console.log(`🎨 Widget EChart detectado: ${widgetTemplate.chart_type}`);
-
-      // Preparar datos para el backend
-      const echartPayload = {
-        doc_name: State.state.docName,
-        chart_type: widgetTemplate.chart_type,
-        chart_data: JSON.stringify(widgetTemplate.default_data),
-        chart_config: JSON.stringify(widgetTemplate.default_config),
-        widget_properties: JSON.stringify({
-          title: widgetTemplate.name,
-          position: position,
-        }),
-      };
-
-      // Llamar al backend para crear el EChart
-      window.DragDropWidgets.createEChartWidget(echartPayload, widget);
-    } else {
-      // Widget tradicional (card, table, etc.)
-      widget.properties = widgetTemplate.default_properties;
-      Grid.addWidget(widgetTemplate, position);
-    }
-  };
-
-  // 📡 Crear EChart mediante backend
-  window.DragDropWidgets.createEChartWidget = function (payload, widgetBase) {
-    frappe.call({
-      method: "daltek.daltek.doctype.daltek.daltek.add_widget_echart",
-      args: payload,
-      freeze: true,
-      freeze_message: __("Creando gráfico..."),
-      callback: function (response) {
-        if (response.message && response.message.success) {
-          const createdWidget = response.message.widget;
-
-          console.log("✅ EChart creado en backend:", createdWidget.id);
-
-          // Fusionar datos del backend con widget base
-          const finalWidget = {
-            ...widgetBase,
-            id: createdWidget.id,
-            echart_data: createdWidget.echart_data,
-            echart_config: createdWidget.echart_config,
-            properties: createdWidget.properties,
-          };
-
-          // Renderizar en el grid
-          window.DragDropWidgets.renderEChartWidget(finalWidget);
-
-          // Actualizar estado
-          State.addWidget(finalWidget);
-
-          frappe.show_alert(
-            {
-              message: __("Gráfico creado exitosamente"),
-              indicator: "green",
-            },
-            3,
-          );
-        } else {
-          frappe.msgprint({
-            title: __("Error"),
-            message: response.message?.error || __("Error creando gráfico"),
-            indicator: "red",
-          });
-        }
-      },
-      error: function (err) {
-        console.error("❌ Error llamando al backend:", err);
-        frappe.msgprint({
-          title: __("Error de conexión"),
-          message: __("No se pudo conectar con el servidor"),
-          indicator: "red",
-        });
-      },
-    });
-  };
-
-  // 🎨 Renderizar EChart en el canvas
-  window.DragDropWidgets.renderEChartWidget = function (widget) {
-    const grid = State.state.grid;
-    if (!grid) {
-      console.error("❌ Grid no inicializado");
-      return;
-    }
-
-    console.log("🎨 Renderizando EChart:", widget);
-
-    // Crear nodo del DOM
-    const node = document.createElement("div");
-    node.className = "grid-stack-item";
-    node.dataset.widgetId = widget.id;
-    node.dataset.widgetType = "echart";
-
-    // HTML del contenedor del chart
-    node.innerHTML = `
-      <div class="grid-stack-item-content">
-        <div class="dd-widget-card echart-widget">
-          <div class="dd-widget-header">
-            <h5 class="dd-widget-title">${
-              widget.properties?.title || "Chart"
-            }</h5>
-            <button class="dd-widget-config-btn" data-widget-id="${widget.id}">
-              <i class="fa fa-cog"></i>
-            </button>
-          </div>
-          <div class="dd-widget-body">
-            <div id="echart_${widget.id}" class="echart-container"
-                 style="width: 100%; height: 100%;"></div>
-          </div>
-        </div>
+    // Preview HTML para el sidebar
+    previewHtml: `
+      <div style="
+        width:100px;
+        height:60px;
+        background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color:white;
+        text-align:center;
+        font-size:11px;
+        border-radius:6px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        cursor:grab;
+      ">
+        <i class="fa fa-line-chart" style="font-size:20px;margin-bottom:4px;"></i>
+        <span>Line Chart</span>
       </div>
-    `;
+    `,
 
-    // Configurar posición
-    const position = widget.position || {};
-    node.setAttribute("gs-x", position.x || position.col || 0);
-    node.setAttribute("gs-y", position.y || position.row || 0);
-    node.setAttribute("gs-w", position.width || 6);
-    node.setAttribute("gs-h", position.height || 4);
+    // Configuración del grid
+    grid_config: { w: 6, h: 4, minW: 4, minH: 3 },
+  },
 
-    // Agregar al grid
-    grid.addWidget(node, {
-      x: position.x || position.col || 0,
-      y: position.y || position.row || 0,
-      w: position.width || 6,
-      h: position.height || 4,
-    });
+  {
+    id: "bar_chart_widget",
+    name: "Bar Chart",
+    label: "Gráfico de Barras - Comparaciones categóricas",
+    type: "echart",
+    chart_type: "bar",
+    default_data: {
+      series: [{ name: "Ventas Q1", data: [100, 200, 150, 250] }],
+      categories: ["Producto A", "Producto B", "Producto C", "Producto D"],
+    },
+    default_config: {
+      barWidth: "60%",
+      colors: ["#4CAF50"],
+    },
+    previewHtml: `
+      <div style="
+        width:100px;
+        height:60px;
+        background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color:white;
+        text-align:center;
+        font-size:11px;
+        border-radius:6px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        cursor:grab;
+      ">
+        <i class="fa fa-bar-chart" style="font-size:20px;margin-bottom:4px;"></i>
+        <span>Bar Chart</span>
+      </div>
+    `,
+    grid_config: { w: 6, h: 4, minW: 4, minH: 3 },
+  },
 
-    console.log("✅ Nodo agregado al grid, esperando DOM...");
+  {
+    id: "pie_chart_widget",
+    name: "Pie Chart",
+    label: "Gráfico Circular - Distribución porcentual",
+    type: "echart",
+    chart_type: "pie",
+    default_data: {
+      data: [
+        { name: "Categoría A", value: 400 },
+        { name: "Categoría B", value: 300 },
+        { name: "Categoría C", value: 200 },
+        { name: "Categoría D", value: 100 },
+      ],
+    },
+    default_config: {
+      show_labels: true,
+      radius: "60%",
+      colors: ["#FF9800", "#2196F3", "#4CAF50", "#F44336"],
+    },
+    previewHtml: `
+      <div style="
+        width:100px;
+        height:60px;
+        background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color:white;
+        text-align:center;
+        font-size:11px;
+        border-radius:6px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        cursor:grab;
+      ">
+        <i class="fa fa-pie-chart" style="font-size:20px;margin-bottom:4px;"></i>
+        <span>Pie Chart</span>
+      </div>
+    `,
+    grid_config: { w: 4, h: 4, minW: 3, minH: 3 },
+  },
 
-    // Esperar a que el DOM se actualice
-    setTimeout(() => {
-      // Inicializar EChart
-      const chartContainer = document.getElementById(`echart_${widget.id}`);
-
-      console.log(
-        "🔍 Buscando contenedor:",
-        `echart_${widget.id}`,
-        chartContainer,
-      );
-
-      if (chartContainer && typeof echarts !== "undefined") {
-        console.log(
-          "📊 Inicializando EChart con config:",
-          widget.echart_config,
-        );
-
-        const chart = echarts.init(chartContainer);
-        chart.setOption(widget.echart_config);
-
-        // Guardar instancia para futuras actualizaciones
-        State.state.echartInstances = State.state.echartInstances || {};
-        State.state.echartInstances[widget.id] = chart;
-
-        // Resize automático
-        window.addEventListener("resize", () => chart.resize());
-
-        console.log(`✅ EChart renderizado exitosamente: ${widget.id}`);
-      } else {
-        console.error("❌ No se pudo inicializar EChart:", widget.id);
-        console.error("   - Contenedor encontrado:", !!chartContainer);
-        console.error(
-          "   - ECharts disponible:",
-          typeof echarts !== "undefined",
-        );
-        if (typeof echarts === "undefined") {
-          console.error("⚠️ ECharts.js no está cargado. Verifica hooks.py");
-        }
-      }
-    }, 200);
-  };
-
-  // Renderizar la lista de widgets disponibles
-  window.DragDropWidgets.renderAvailableWidgets = function () {
-    const widgets = State.state.availableWidgets;
-    UI.renderWidgetList(widgets);
-    window.DragDropWidgets.initializeDragEvents();
-  };
-})(window);
+  // ========== WIDGETS TRADICIONALES ==========
+  {
+    id: "card_widget",
+    name: "KPI Card",
+    label: "Tarjeta de indicador clave",
+    type: "card", // No es echart
+    default_properties: {
+      title: "KPI",
+      value: "0",
+      color: "#2196F3",
+      icon: "/assets/daltek/icons/card.svg",
+    },
+    previewHtml: `
+      <div style="
+        width:100px;
+        height:60px;
+        background:#2196F3;
+        color:white;
+        text-align:center;
+        font-size:11px;
+        border-radius:6px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        cursor:grab;
+      ">
+        <img src="/assets/daltek/icons/card.svg" style="width:20px;height:20px;margin-bottom:4px;">
+        <span>KPI Card</span>
+      </div>
+    `,
+    grid_config: { w: 3, h: 2, minW: 2, minH: 2 },
+  },
+];

@@ -34,6 +34,7 @@ app_include_js = [
     "/assets/daltek/js/libs/gridstack-all.js",
     # ECharts library for chart rendering
     "/assets/daltek/js/libs/echarts.min.js",
+    # Daltek creation doc message
 ]
 
 # include js, css files in header of web template
@@ -53,6 +54,7 @@ app_include_js = [
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {"Daltek": "public/js/daltek_name_prompter.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -247,5 +249,5 @@ app_include_js = [
 # export_python_type_annotations = True
 
 # default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
+# 	"Logging DocType Name": 30 # days to retain logs
 # }

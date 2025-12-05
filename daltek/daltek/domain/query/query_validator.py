@@ -1,6 +1,5 @@
 from typing import Any
 
-
 class QueryValidator:
     """Validaciones centralizadas para los datos de consultas.
 

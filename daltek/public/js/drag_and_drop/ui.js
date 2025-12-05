@@ -32,7 +32,7 @@
             <h5 class="dd-widget-title">${widget.properties.title}</h5>
             <button class="dd-widget-config-btn" data-widget-id="${
               widget.id
-            }">⚙</button>
+            }"></button>
           </div>
           <span class="dd-widget-number">${widget.properties.number || 0}</span>
           <div class="dd-widget-resize-handle"></div>

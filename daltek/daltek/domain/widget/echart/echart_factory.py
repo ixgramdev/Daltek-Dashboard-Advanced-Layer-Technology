@@ -9,7 +9,6 @@ Responsabilidades:
 
 from .base_echart_builder import BaseEChartBuilder
 
-
 class EChartFactory:
     """
     Factory que crea instancias de builders de EChart según su tipo.

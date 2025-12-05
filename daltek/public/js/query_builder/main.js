@@ -1,13 +1,13 @@
 // Inicialización del sistema
 
 function init() {
-  // ✅ Inicializar vistas
+  // Inicializar vistas
   if (window.QueryBuilderViews) {
     window.QueryBuilderViews.loadSavedQueries();
     window.QueryBuilderViews.showListView();
   }
 
-  // ✅ Poblar el dropdown de búsqueda
+  // Poblar el dropdown de búsqueda
   window.QueryBuilderSteps.populateTableSelect();
 
   const dom = window.QueryBuilderUI.dom;
@@ -16,7 +16,7 @@ function init() {
 
   dom.tableHint.textContent = "Comienza escribiendo para buscar un DocType";
 
-  // ✅ Event listeners para el campo de búsqueda
+  // Event listeners para el campo de búsqueda
   if (searchInput && dropdown) {
     // Filtrar items mientras el usuario escribe
     searchInput.addEventListener("input", function () {
@@ -91,7 +91,7 @@ function init() {
     });
   }
 
-  // ✅ Event listeners para el campo de búsqueda de campos
+  // Event listeners para el campo de búsqueda de campos
   const fieldsSearch = document.getElementById("fieldsSearch");
   const fieldsDropdown = document.getElementById("fieldsDropdown");
 

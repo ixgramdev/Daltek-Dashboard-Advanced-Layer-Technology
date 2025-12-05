@@ -75,6 +75,21 @@ Archivos principales
 - `daltek/public/js/drag_and_drop/` — lógica drag & drop y widgets
 - `INFORME_QUERY_BUILDER.md`, `INFORME_DRAG_DROP.md` — documentación técnica
 
+## 📚 Documentación Importante
+
+### Widget Configuration Modal
+- **README_WIDGET_CONFIG.md** — Guía rápida del modal de configuración de widgets
+- **INDICE_GLOBAL_WIDGET_CONFIG.md** — Índice completo de la funcionalidad
+
+### Layouts Separados por Documento (✅ Resuelto)
+- **INDICE_LAYOUTS_SEPARADOS.md** — Índice principal de la solución
+- **SOLUCION_LAYOUTS_SEPARADOS.md** — Explicación de la solución y testing
+- **VERIFICACION_FINAL_LAYOUTS.md** — Verificación técnica del código
+- **ARQUITECTURA_LAYOUTS_SEPARADOS.md** — Diagramas y flujos detallados
+
+**Problema resuelto:** Cada documento Daltek ahora tiene su propio layout separado.
+No hay mezcla de widgets entre documentos. Ver `INDICE_LAYOUTS_SEPARADOS.md` para más detalles.
+
 Contribuir / desarrollo
 - Clona y trabaja en `apps/daltek`. Añade tests en la carpeta del doctype cuando desarrolles nueva lógica.
 - Ejecuta `bench migrate` después de cambios en doctypes o fixtures.

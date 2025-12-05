@@ -48,7 +48,7 @@
     if (savedQueries.length === 0) {
       queriesList.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">📊</div>
+          <div class="empty-state-icon"></div>
           <div class="empty-state-title">No hay consultas guardadas</div>
           <div class="empty-state-description">
             Comienza creando tu primera consulta SQL para visualizar datos
@@ -108,9 +108,9 @@
     const meta = document.createElement("div");
     meta.className = "query-card-meta";
     meta.innerHTML = `
-      <span>📋 ${query.doctype || "N/A"}</span>
-      <span>📊 ${query.columns ? query.columns.length : 0} columnas</span>
-      <span>🔍 ${query.filters ? query.filters.length : 0} filtros</span>
+      <span> ${query.doctype || "N/A"}</span>
+      <span> ${query.columns ? query.columns.length : 0} columnas</span>
+      <span> ${query.filters ? query.filters.length : 0} filtros</span>
     `;
 
     card.appendChild(header);
@@ -498,7 +498,7 @@
     });
   }
 
-  // --- AUTO-GUARDADO ---  Analizar esta sección cuidadosamente
+  // --- AUTO-GUARDADO --- Analizar esta sección cuidadosamente
 
   function triggerAutoSave() {
     // Limpiar timer anterior si existe
@@ -558,7 +558,7 @@
           // Mostrar indicador sutil de guardado
           const saveIndicator = document.getElementById("autoSaveIndicator");
           if (saveIndicator) {
-            saveIndicator.textContent = "✓ Guardado";
+            saveIndicator.textContent = " Guardado";
             saveIndicator.style.color = "green";
 
             setTimeout(() => {

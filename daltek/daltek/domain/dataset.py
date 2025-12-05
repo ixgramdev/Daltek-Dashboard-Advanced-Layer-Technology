@@ -1,10 +1,8 @@
 # daltek/domain/dataset.py
 
-
 # Adaptar la clase para el trabajo con la libreria EChart
 
 import pandas as pd
-
 
 class Dataset:
     """

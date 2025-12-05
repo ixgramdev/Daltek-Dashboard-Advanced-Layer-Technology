@@ -10,12 +10,8 @@ from .echart.echart_transforrmer import EChartTransformer
 from .widget_repository import WidgetRepository
 from .widget_validator import WidgetValidator
 
-
 class WidgetService:
-    """
-    Servicio para gestionar widgets del dashboard Daltek.
-    CRUD operations sobre el campo `layout` (JSON) del DocType Daltek.
-    """
+    """Servicio para gestionar widgets del dashboard Daltek."""
 
     def __init__(self):
         self.validator = WidgetValidator()
@@ -23,86 +19,13 @@ class WidgetService:
         self.echart_transformer = EChartTransformer()
         self.repository = WidgetRepository()
 
-    # --- CRUD OPERATIONS ---
-
-    @frappe.whitelist()
-    def render_layout(self, doc_name: str) -> dict[str, Any]:
-        """
-        Renderiza el layout JSON del documento Daltek en ejecución.
-        Obtiene el layout guardado y lo prepara para renderizar en el cliente.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-
-        Returns:
-            Dict con success, layout y widgets renderizados
-        """
-        try:
-            # Obtiene el layout desde el repositorio; si el doc no existe, lanza error
-            try:
-                layout = self.repository.get_layout(doc_name)
-            except ValueError as e:
-                return {"success": False, "error": str(e)}
-
-            if not layout:
-                return {
-                    "success": True,
-                    "layout": [],
-                    "widgets": [],
-                    "message": "No hay widgets en el layout",
-                }
-
-            # Procesar widgets para renderizado
-            rendered_widgets = self._process_widgets_for_render(layout)
-
-            return {
-                "success": True,
-                "layout": layout,
-                "widgets": rendered_widgets,
-                "count": len(rendered_widgets),
-            }
-
-        except Exception as e:
-            frappe.log_error(
-                f"Error en render_layout(): {str(e)}", "WidgetService Error"
-            )
-            return {"success": False, "error": str(e)}
-
-    @frappe.whitelist()
-    def get_layout(self, doc_name: str) -> list[dict]:
-        """
-        Obtiene el layout (lista de widgets) del documento Daltek.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-
-        Returns:
-            Lista de widgets o lista vacía si no existe layout
-        """
-        try:
-            return self.repository.get_layout(doc_name)
-
-        except Exception as e:
-            frappe.log_error(f"Error en get_layout(): {str(e)}", "WidgetService Error")
-            return []
-
+    # --- REPOSITORY METHODS ---
     @frappe.whitelist()
     def add(self, doc_name: str, widget: str | dict) -> dict[str, Any]:
-        """
-        Añade un nuevo widget al layout del documento.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-            widget: Dict o JSON string con los datos del widget
-
-        Returns:
-            Dict con success, message y layout actualizado
-        """
+        """Añade un nuevo widget al layout del documento en formato normalizado."""
         try:
-            # Parsear widget si es string
             widget_data = json.loads(widget) if isinstance(widget, str) else widget
 
-            # Determinar si es un widget EChart para escoger DTO adecuado
             widget_type = widget_data.get("type")
 
             if widget_type == "echart" or widget_data.get("chart_type"):
@@ -110,49 +33,46 @@ class WidgetService:
             else:
                 dto = WidgetDTO.from_dict(widget_data)
 
-            # Validar DTO a nivel de dominio
-            is_valid, errors = dto.validate()
-            if not is_valid:
+            layout = self.repository.get_layout(doc_name)
+
+            if not dto.id:
+                dto.id = self._generate_widget_id(layout)
+
+            if not dto.id:
                 return {
                     "success": False,
-                    "error": "; ".join(errors) or "Widget inválido",
+                    "error": "No se pudo generar ID único para el widget",
                 }
 
-            # Validar widget con el validador existente (reglas adicionales)
-            validation = self.validator.validate_widget(dto.to_dict())
+            now_iso = frappe.utils.now_datetime().isoformat()
+            if not dto.created_at:
+                dto.created_at = now_iso
+            dto.modified_at = now_iso
+
+            print(dto.__dict__)
+
+            validation = self.validator.validate_widget(dto)
             if not validation.get("valid"):
                 return {
                     "success": False,
                     "error": validation.get("error", "Widget inválido"),
                 }
 
-            # Obtener layout actual desde el repositorio
-            layout = self.repository.get_layout(doc_name)
+            # Convertir a formato normalizado
 
-            # Asignar ID único si no tiene
-            if not dto.id:
-                dto.id = self._generate_widget_id(layout)
-
-            # Añadir metadata
-            now_iso = frappe.utils.now_datetime().isoformat()
-            if not dto.created_at:
-                dto.created_at = now_iso
-            dto.modified_at = now_iso
-
-            # Si es un chart de EChart, procesarlo
             dto_dict = dto.to_dict()
 
-            if dto_dict.get("type") in self.echart_factory.get_available_types():
-                echart_result = self._build_echart(dto_dict)
+            # Construir configuración de EChart si es necesario
+            if isinstance(dto, EChartWidgetDTO):
+                echart_result = self._build_echart_config(dto)
                 if not echart_result.get("success"):
                     return {
                         "success": False,
                         "error": f"Error construyendo EChart: {echart_result.get('error')}",
                     }
-                # Almacenar configuración del EChart
-                dto_dict["echart_config"] = echart_result.get("config")
+                # Actualizar contenido con la configuración construida
+                dto_dict["content"]["config"] = echart_result.get("config")
 
-            # Agregar widget a layout y persistir mediante el repositorio
             layout.append(dto_dict)
             self.repository.save_layout(doc_name, layout)
 
@@ -167,21 +87,9 @@ class WidgetService:
             frappe.log_error(f"Error en add(): {str(e)}", "WidgetService Error")
             return {"success": False, "error": str(e)}
 
-    # --- MÉTODOS PARA ECHART ---
-
     @frappe.whitelist()
     def build_echart(self, doc_name: str, widget_id: str) -> dict[str, Any]:
-        """
-        Construye un EChart desde la configuración guardada.
-        Útil para reconstruir un chart después de cambios en datos.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-            widget_id: ID del widget
-
-        Returns:
-            Dict con success y configuración del EChart
-        """
+        """Construye un EChart desde la configuración guardada."""
         try:
             layout = self.get_layout(doc_name)
             widget = None
@@ -203,7 +111,6 @@ class WidgetService:
                     "error": "Widget no es de tipo EChart",
                 }
 
-            # Construir el chart
             result = self._build_echart(widget)
             return result
 
@@ -222,22 +129,8 @@ class WidgetService:
         chart_config: str | dict = None,
         widget_properties: dict = None,
     ) -> dict[str, Any]:
-        """
-        Método especializado para añadir un EChart.
-        Simplifica el proceso: valida datos, construye config, y añade widget.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-            chart_type: Tipo de chart (line, bar, pie, scatter)
-            chart_data: Datos del chart (series, categories, etc)
-            chart_config: Configuración visual del chart (colors, title, etc)
-            widget_properties: Propiedades del widget (title, size, etc)
-
-        Returns:
-            Dict con success y widget completo
-        """
+        """Método especializado para añadir un EChart."""
         try:
-            # Parsear strings a dicts
             if isinstance(chart_data, str):
                 chart_data = json.loads(chart_data)
             if isinstance(chart_config, str):
@@ -245,7 +138,6 @@ class WidgetService:
             if chart_config is None:
                 chart_config = {}
 
-            # Validar que el tipo exista
             if not self.echart_factory.is_registered(chart_type):
                 return {
                     "success": False,
@@ -253,7 +145,6 @@ class WidgetService:
                     f"Disponibles: {', '.join(self.echart_factory.get_available_types())}",
                 }
 
-            # Construir configuración del EChart
             builder = self.echart_factory.create(chart_type)
             build_result = builder.build(chart_data, chart_config)
 
@@ -263,17 +154,15 @@ class WidgetService:
                     "error": build_result.get("error", "Error desconocido en build"),
                 }
 
-            # Crear widget con la configuración
             widget = {
-                "type": "echart",  # Tipo principal del widget
-                "chart_type": chart_type,  # Subtipo específico (line, bar, pie, scatter)
+                "type": "echart",
+                "chart_type": chart_type,
                 "echart_data": chart_data,
                 "echart_config": build_result.get("config"),
                 "properties": widget_properties
                 or {"title": f"{chart_type.title()} Chart"},
             }
 
-            # Añadir el widget
             return self.add(doc_name, widget)
 
         except Exception as e:
@@ -284,18 +173,7 @@ class WidgetService:
     def update_echart_data(
         self, doc_name: str, widget_id: str, chart_data: str | dict
     ) -> dict[str, Any]:
-        """
-        Actualiza solo los datos de un EChart sin modificar su configuración.
-        Util para actualizar información sin cambiar estilos.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-            widget_id: ID del widget
-            chart_data: Nuevos datos para el chart
-
-        Returns:
-            Dict con success y widget actualizado
-        """
+        """Actualiza solo los datos de un EChart."""
         try:
             if isinstance(chart_data, str):
                 chart_data = json.loads(chart_data)
@@ -321,10 +199,8 @@ class WidgetService:
                     "error": "Widget no es de tipo EChart",
                 }
 
-            # Actualizar datos
             widget["echart_data"] = chart_data
 
-            # Reconstruir configuración con nuevos datos
             chart_config = widget.get("echart_config", {})
             builder = self.echart_factory.create(chart_type)
             build_result = builder.build(chart_data, chart_config)
@@ -338,7 +214,6 @@ class WidgetService:
             widget["echart_config"] = build_result.get("config")
             widget["modified_at"] = frappe.utils.now_datetime().isoformat()
 
-            # Guardar cambios
             frappe.db.set_value(
                 "Daltek",
                 doc_name,
@@ -363,17 +238,7 @@ class WidgetService:
     def transform_echart_for_render(
         self, doc_name: str, widget_id: str
     ) -> dict[str, Any]:
-        """
-        Transforma la configuración de un EChart para renderización en cliente.
-        Aplica transformaciones finales antes de enviar al navegador.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-            widget_id: ID del widget
-
-        Returns:
-            Dict con success y widget transformado
-        """
+        """Transforma la configuración de un EChart para renderización."""
         try:
             layout = self.get_layout(doc_name)
             widget = None
@@ -389,7 +254,6 @@ class WidgetService:
                     "error": f"Widget '{widget_id}' no encontrado",
                 }
 
-            # Transformar el widget
             transformed = self.echart_transformer.transform_widget(widget)
 
             return {
@@ -406,16 +270,7 @@ class WidgetService:
 
     @frappe.whitelist()
     def delete(self, doc_name: str, widget_id: str) -> dict[str, Any]:
-        """
-        Elimina un widget del layout.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-            widget_id: ID del widget a eliminar
-
-        Returns:
-            Dict con success, message y layout actualizado
-        """
+        """Elimina un widget del layout."""
         try:
             if not frappe.db.exists("Daltek", doc_name):
                 return {
@@ -424,8 +279,6 @@ class WidgetService:
                 }
 
             layout = self.get_layout(doc_name)
-
-            # Buscar y eliminar widget
             filtered_layout = [w for w in layout if w.get("id") != widget_id]
 
             if len(filtered_layout) == len(layout):
@@ -434,7 +287,6 @@ class WidgetService:
                     "error": f"Widget con ID '{widget_id}' no encontrado",
                 }
 
-            # Guardar layout actualizado
             frappe.db.set_value(
                 "Daltek",
                 doc_name,
@@ -457,18 +309,7 @@ class WidgetService:
     def edit(
         self, doc_name: str, widget_id: str, widget_data: str | dict
     ) -> dict[str, Any]:
-        """
-        Edita un widget existente.
-        Obtiene el widget actual, lo elimina y añade la versión actualizada.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-            widget_id: ID del widget a editar
-            widget_data: Dict o JSON string con los nuevos datos
-
-        Returns:
-            Dict con success, message y layout actualizado
-        """
+        """Edita un widget existente."""
         try:
             if not frappe.db.exists("Daltek", doc_name):
                 return {
@@ -476,12 +317,10 @@ class WidgetService:
                     "error": f"Documento Daltek '{doc_name}' no existe",
                 }
 
-            # Parsear datos si es string
             new_data = (
                 json.loads(widget_data) if isinstance(widget_data, str) else widget_data
             )
 
-            # Validar nuevo widget
             validation = self.validator.validate_widget(new_data)
             if not validation.get("valid"):
                 return {
@@ -489,10 +328,8 @@ class WidgetService:
                     "error": validation.get("error", "Widget inválido"),
                 }
 
-            # Obtener layout actual
             layout = self.get_layout(doc_name)
 
-            # Buscar widget actual
             widget_index = None
             old_widget = None
             for i, w in enumerate(layout):
@@ -507,15 +344,12 @@ class WidgetService:
                     "error": f"Widget con ID '{widget_id}' no encontrado",
                 }
 
-            # Mantener ID y timestamps de creación
             new_data["id"] = widget_id
             new_data["created_at"] = old_widget.get("created_at")
             new_data["modified_at"] = frappe.utils.now_datetime().isoformat()
 
-            # Actualizar widget en layout
             layout[widget_index] = new_data
 
-            # Guardar en BD
             frappe.db.set_value(
                 "Daltek",
                 doc_name,
@@ -539,22 +373,10 @@ class WidgetService:
     def update_position(
         self, doc_name: str, widget_id: str, position: dict[str, Any]
     ) -> dict[str, Any]:
-        """
-        Actualiza solo la posición de un widget (x, y, width, height).
-        Útil para drag & drop sin recargar el widget completo.
-
-        Args:
-            doc_name: Nombre del documento Daltek
-            widget_id: ID del widget
-            position: Dict con {x, y, width, height} o {col, row, width, height}
-
-        Returns:
-            Dict con success y widget actualizado
-        """
+        """Actualiza la posición de un widget (en sección layout)."""
         try:
             layout = self.get_layout(doc_name)
 
-            # Buscar widget
             widget = None
             for w in layout:
                 if w.get("id") == widget_id:
@@ -567,14 +389,13 @@ class WidgetService:
                     "error": f"Widget '{widget_id}' no encontrado",
                 }
 
-            # Actualizar posición
-            if "position" not in widget:
-                widget["position"] = {}
+            # Actualizar layout (formato normalizado único)
+            if "layout" not in widget:
+                widget["layout"] = {}
 
-            widget["position"].update(position)
-            widget["modified_at"] = frappe.utils.now_datetime().isoformat()
+            widget["layout"].update(position)
+            widget["metadata"]["modified_at"] = frappe.utils.now_datetime().isoformat()
 
-            # Guardar
             frappe.db.set_value(
                 "Daltek",
                 doc_name,
@@ -594,8 +415,6 @@ class WidgetService:
                 f"Error en update_position(): {str(e)}", "WidgetService Error"
             )
             return {"success": False, "error": str(e)}
-
-    # --- PRIVATE HELPER METHODS ---
 
     def _parse_layout(self, layout_data: str | list) -> list[dict]:
         """Parsea el layout del BD (string JSON) a list."""
@@ -619,7 +438,6 @@ class WidgetService:
         timestamp = int(time.time() * 1000)
         existing_ids = [w.get("id") for w in layout if w.get("id")]
 
-        # Extraer números de IDs existentes
         numeric_ids = []
         for wid in existing_ids:
             try:
@@ -630,18 +448,14 @@ class WidgetService:
         next_num = max(numeric_ids) + 1 if numeric_ids else len(layout) + 1
         return f"widget_{next_num}_{timestamp}"
 
-    def _build_echart(self, widget_data: dict) -> dict[str, Any]:
+    def _build_echart_config(self, dto: EChartWidgetDTO) -> dict[str, Any]:
         """
         Construye la configuración de un EChart usando el factory.
 
-        Args:
-            widget_data: Dict con los datos del widget
-
-        Returns:
-            Dict con success y configuración del EChart
+        Diseñado para trabajar con DTOs en formato normalizado.
         """
         try:
-            chart_type = widget_data.get("type")
+            chart_type = dto.chart_type
 
             if not self.echart_factory.is_registered(chart_type):
                 return {
@@ -649,21 +463,14 @@ class WidgetService:
                     "error": f"Tipo '{chart_type}' no está registrado",
                 }
 
-            # Obtener datos y configuración
-            chart_data = widget_data.get("echart_data", {})
-            chart_config = widget_data.get("properties", {})
-
-            # Crear builder
             builder = self.echart_factory.create(chart_type)
-
-            # Construir configuración
-            result = builder.build(chart_data, chart_config)
+            result = builder.build(dto.echart_data, dto.properties)
 
             return result
 
         except Exception as e:
             frappe.log_error(
-                f"Error en _build_echart(): {str(e)}", "WidgetService Error"
+                f"Error en _build_echart_config(): {str(e)}", "WidgetService Error"
             )
             return {
                 "success": False,
@@ -673,20 +480,56 @@ class WidgetService:
     def _process_widgets_for_render(self, layout: list[dict]) -> list[dict]:
         """
         Procesa widgets para renderizado en cliente.
-        Añade metadatos y prepara datos para visualización.
-        """
-        rendered = []
-        for widget in layout:
-            rendered_widget = {
-                "id": widget.get("id"),
-                "type": widget.get("type"),
-                "title": widget.get("properties", {}).get("title", "Widget"),
-                "position": widget.get("position", {}),
-                "properties": widget.get("properties", {}),
-                "data": widget.get("data", {}),
-                "created_at": widget.get("created_at"),
-                "modified_at": widget.get("modified_at"),
-            }
-            rendered.append(rendered_widget)
 
-        return rendered
+        Como todo está en formato normalizado, retorna directamente.
+        """
+        return layout
+
+    def _normalize_widget(self, widget: dict) -> dict:
+        """
+        DEPRECATED: Ya no es necesario.
+        Todo widget ya está en formato normalizado.
+        """
+        return widget
+
+    # --- Layout ---
+    @frappe.whitelist()
+    def render_layout(self, doc_name: str) -> dict[str, Any]:
+        """Renderiza el layout JSON del documento Daltek."""
+        try:
+            try:
+                layout = self.repository.get_layout(doc_name)
+            except ValueError as e:
+                return {"success": False, "error": str(e)}
+
+            if not layout:
+                return {
+                    "success": True,
+                    "layout": [],
+                    "widgets": [],
+                    "message": "No hay widgets en el layout",
+                }
+
+            rendered_widgets = self._process_widgets_for_render(layout)
+
+            return {
+                "success": True,
+                "layout": layout,
+                "widgets": rendered_widgets,
+                "count": len(rendered_widgets),
+            }
+
+        except Exception as e:
+            frappe.log_error(
+                f"Error en render_layout(): {str(e)}", "WidgetService Error"
+            )
+            return {"success": False, "error": str(e)}
+
+    @frappe.whitelist()
+    def get_layout(self, doc_name: str) -> list[dict]:
+        """Obtiene el layout del documento Daltek."""
+        try:
+            return self.repository.get_layout(doc_name)
+        except Exception as e:
+            frappe.log_error(f"Error en get_layout(): {str(e)}", "WidgetService Error")
+            return []

@@ -9,7 +9,6 @@ from typing import Any
 from .base_echart_builder import BaseEChartBuilder
 from .echart_factory import EChartFactory
 
-
 class LineChartBuilder(BaseEChartBuilder):
     """Builder para gráficos de líneas."""
 
@@ -138,7 +137,6 @@ class LineChartBuilder(BaseEChartBuilder):
 
         return yaxis
 
-
 class BarChartBuilder(BaseEChartBuilder):
     """Builder para gráficos de barras."""
 
@@ -225,7 +223,6 @@ class BarChartBuilder(BaseEChartBuilder):
     def _build_yaxis(self) -> dict[str, Any] | None:
         """Construye eje Y."""
         return {"type": "value"}
-
 
 class PieChartBuilder(BaseEChartBuilder):
     """Builder para gráficos circulares (pie)."""
@@ -318,7 +315,6 @@ class PieChartBuilder(BaseEChartBuilder):
     def _get_legend_data(self) -> list[str]:
         """Extrae nombres para leyenda desde data."""
         return [item.get("name", "") for item in self.data.get("data", [])]
-
 
 class ScatterChartBuilder(BaseEChartBuilder):
     """Builder para gráficos de dispersión."""
@@ -417,7 +413,6 @@ class ScatterChartBuilder(BaseEChartBuilder):
             "type": "value",
             "name": self.config.get("yaxis_name", "Y"),
         }
-
 
 # --- REGISTRO AUTOMÁTICO DE BUILDERS ---
 

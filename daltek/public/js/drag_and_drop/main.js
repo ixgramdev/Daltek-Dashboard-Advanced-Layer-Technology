@@ -28,7 +28,7 @@
 
   // Función de inicialización principal
   window.initDragDropSystem = function (frm, availableWidgets) {
-    console.log("🚀 Inicializando sistema Drag and Drop...", {
+    console.log(" Inicializando sistema Drag and Drop...", {
       frm: frm,
       docName: frm.doc.name,
       availableWidgets: availableWidgets,
@@ -60,20 +60,30 @@
         if (response.message && response.message.success) {
           const layout = response.message.layout || [];
 
-          console.log(`📂 Layout cargado: ${layout.length} widgets`);
+          console.log(` Layout cargado: ${layout.length} widgets`);
 
           // Inicializar GridStack
           const grid = Grid.initialize();
 
           if (!grid) {
-            console.error("❌ No se pudo inicializar GridStack");
+            console.error(" No se pudo inicializar GridStack");
             return;
           }
 
-          console.log("✅ GridStack inicializado");
+          console.log(" GridStack inicializado");
 
           // Renderizar widgets existentes
           layout.forEach((widget) => {
+            // Evitar renderizar widgets que ya se renderizaron inmediatamente
+            const renderedIds = window.DragDropWidgets.renderedWidgetIds || {};
+            if (renderedIds[widget.id]) {
+              console.log(
+                `⏭ Widget ${widget.id} ya renderizado, saltando...`,
+              );
+              State.addWidget(widget);
+              return;
+            }
+
             if (widget.type === "echart") {
               // Renderizar EChart
               Widgets.renderEChartWidget(widget);
@@ -89,13 +99,16 @@
           // Renderizar sidebar
           Widgets.renderAvailableWidgets();
 
-          console.log("✅ Sistema Drag and Drop inicializado correctamente");
+          // Inicializar eventos de configuración de widgets
+          Widgets.initializeConfigEvents();
+
+          console.log(" Sistema Drag and Drop inicializado correctamente");
         } else {
-          console.error("❌ Error cargando layout:", response.message?.error);
+          console.error(" Error cargando layout:", response.message?.error);
         }
       },
       error: function (err) {
-        console.error("❌ Error de conexión al cargar layout:", err);
+        console.error(" Error de conexión al cargar layout:", err);
       },
     });
   };
