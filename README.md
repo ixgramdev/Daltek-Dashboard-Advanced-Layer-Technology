@@ -1,5 +1,8 @@
 # Daltek
 
+<img width="739" height="645" alt="Daltek Logo" src="https://github.com/user-attachments/assets/d12b8ea5-2e75-422c-ae1f-b4a07f411211" />
+
+
 Mini-suite para dashboards personalizables y un Query Builder integrado en ERPNext.
 
 Visión general
@@ -68,31 +71,6 @@ Notas sobre la condición de uso de comandos
 Uso rápido después de instalar
 - Abre la interfaz de ERPNext y busca el Doctype/Desk relacionado con `Daltek` (o accede a la ruta donde la app inyecta su UI). Los módulos principales (Query Builder y Drag & Drop) estarán disponibles según permisos de usuario.
 
-Archivos principales
-- `daltek/daltek/doctype/daltek/daltek.py` — endpoints Python / render HTML
-- `daltek/daltek/doctype/daltek/daltek.js` — integración cliente/doctype
-- `daltek/public/js/query_builder/` — lógica UI del Query Builder
-- `daltek/public/js/drag_and_drop/` — lógica drag & drop y widgets
-- `INFORME_QUERY_BUILDER.md`, `INFORME_DRAG_DROP.md` — documentación técnica
-
-## 📚 Documentación Importante
-
-### Widget Configuration Modal
-- **README_WIDGET_CONFIG.md** — Guía rápida del modal de configuración de widgets
-- **INDICE_GLOBAL_WIDGET_CONFIG.md** — Índice completo de la funcionalidad
-
-### Layouts Separados por Documento (✅ Resuelto)
-- **INDICE_LAYOUTS_SEPARADOS.md** — Índice principal de la solución
-- **SOLUCION_LAYOUTS_SEPARADOS.md** — Explicación de la solución y testing
-- **VERIFICACION_FINAL_LAYOUTS.md** — Verificación técnica del código
-- **ARQUITECTURA_LAYOUTS_SEPARADOS.md** — Diagramas y flujos detallados
-
-**Problema resuelto:** Cada documento Daltek ahora tiene su propio layout separado.
-No hay mezcla de widgets entre documentos. Ver `INDICE_LAYOUTS_SEPARADOS.md` para más detalles.
-
-Contribuir / desarrollo
-- Clona y trabaja en `apps/daltek`. Añade tests en la carpeta del doctype cuando desarrolles nueva lógica.
-- Ejecuta `bench migrate` después de cambios en doctypes o fixtures.
 
 Licencia
 - Consulta `license.txt` en la raíz del repositorio para los términos.
